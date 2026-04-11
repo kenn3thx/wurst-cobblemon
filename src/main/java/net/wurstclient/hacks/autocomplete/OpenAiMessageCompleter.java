@@ -62,17 +62,18 @@ public final class OpenAiMessageCompleter extends MessageCompleter
 			JsonObject systemMessage = new JsonObject();
 			systemMessage.addProperty("role", "system");
 			systemMessage.addProperty("content",
-				"Complete the following text. Reply only with the completion."
-					+ " You are not an assistant.");
+				"Chỉ trả lời duy nhất 1 từ là đáp án đúng nhất dựa trên các lựa chọn được cung cấp. "
+					+ "Tuyệt đối không giải thích, không lặp lại câu hỏi, không chào hỏi.");
 			messages.add(systemMessage);
 			JsonObject promptMessage = new JsonObject();
 			promptMessage.addProperty("role", "user");
-			promptMessage.addProperty("content", prompt);
+			promptMessage.addProperty("content",
+				prompt + " Đáp án đúng nhất là:");
 			messages.add(promptMessage);
 			params.add("messages", messages);
 			
 		}else
-			params.addProperty("prompt", prompt);
+			params.addProperty("prompt", prompt + " Đáp án đúng nhất là:");
 		
 		return params;
 	}
