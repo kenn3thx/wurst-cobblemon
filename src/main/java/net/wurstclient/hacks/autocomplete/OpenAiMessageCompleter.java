@@ -92,8 +92,11 @@ public final class OpenAiMessageCompleter extends MessageCompleter
 		HttpURLConnection conn = (HttpURLConnection)url.openConnection();
 		conn.setRequestMethod("POST");
 		conn.setRequestProperty("Content-Type", "application/json");
-		conn.setRequestProperty("Authorization",
-			"Bearer " + System.getenv("WURST_OPENAI_KEY"));
+		String apiKey = System.getenv("WURST_OPENAI_KEY");
+		if(apiKey == null || apiKey.isBlank())
+			apiKey = "your_github_token_here_see_env_file";
+		
+		conn.setRequestProperty("Authorization", "Bearer " + apiKey);
 		
 		// set the request body
 		conn.setDoOutput(true);

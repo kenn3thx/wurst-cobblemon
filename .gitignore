@@ -34,3 +34,6 @@ hs_err_pid*
 *.pyc
 
 desktop.ini
+
+# Environment variables
+.env

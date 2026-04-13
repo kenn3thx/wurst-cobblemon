@@ -7,8 +7,6 @@
  */
 package net.wurstclient.hud;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +28,8 @@ public final class WurstLogo
 		
 		String version = getVersionString();
 		Font tr = WurstClient.MC.font;
+		String prefix = "Hogwarts ";
+		int prefixWidth = tr.width(prefix);
 		
 		// background
 		int bgColor;
@@ -37,14 +37,14 @@ public final class WurstLogo
 			bgColor = RenderUtils.toIntColor(WURST.getGui().getAcColor(), 0.5F);
 		else
 			bgColor = otf.getBackgroundColor();
-		context.fill(0, 6, tr.width(version) + 76, 17, bgColor);
+		context.fill(0, 6, prefixWidth + tr.width(version) + 6, 17, bgColor);
+		
+		// Hogwarts text (replacing logo image)
+		context.drawString(tr, prefix, 2, 8, otf.getTextColor(), false);
 		
 		// version string
-		context.drawString(tr, version, 74, 8, otf.getTextColor(), false);
-		
-		// Wurst logo
-		RenderSystem.enableBlend();
-		context.blit(LOGO_TEXTURE, 0, 3, 0, 0, 72, 18, 72, 18);
+		context.drawString(tr, version, prefixWidth + 2, 8, otf.getTextColor(),
+			false);
 	}
 	
 	private String getVersionString()

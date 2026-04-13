@@ -21,7 +21,6 @@ import net.wurstclient.hacks.autocomplete.MessageCompleter;
 import net.wurstclient.hacks.autocomplete.ModelSettings;
 import net.wurstclient.hacks.autocomplete.OpenAiMessageCompleter;
 import net.wurstclient.hacks.autocomplete.SuggestionHandler;
-import net.wurstclient.util.ChatUtils;
 
 @SearchTags({"auto complete", "Copilot", "ChatGPT", "chat GPT", "GPT-3", "GPT3",
 	"GPT 3", "OpenAI", "open ai", "ChatAI", "chat AI", "ChatBot", "chat bot"})
@@ -53,14 +52,8 @@ public final class AutoCompleteHack extends Hack
 	{
 		completer = new OpenAiMessageCompleter(modelSettings);
 		
-		if(completer instanceof OpenAiMessageCompleter
-			&& System.getenv("WURST_OPENAI_KEY") == null)
-		{
-			ChatUtils.error("API key not found. Please set the"
-				+ " WURST_OPENAI_KEY environment variable and reboot.");
-			setEnabled(false);
-			return;
-		}
+		// System.getenv check removed - using embedded fallback in
+		// OpenAiMessageCompleter
 		
 		EVENTS.add(ChatOutputListener.class, this);
 		EVENTS.add(UpdateListener.class, this);
