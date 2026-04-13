@@ -45,6 +45,9 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 		"\u00a7lAccurate\u00a7r mode shows the exact hitbox of each Pokemon.\n"
 			+ "\u00a7lFancy\u00a7r mode shows slightly larger boxes that look better.");
 	
+	private final CheckboxSetting filterWildOnly =
+		new CheckboxSetting("Wild Only", "Only highlight wild Pokemon.", false);
+	
 	private final CheckboxSetting filterShiny =
 		new CheckboxSetting("Show Shiny", "Highlight shiny Pokemon.", true);
 	
@@ -86,6 +89,7 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 		setCategory(Category.RENDER);
 		addSetting(style);
 		addSetting(boxSize);
+		addSetting(filterWildOnly);
 		addSetting(filterShiny);
 		addSetting(filterLegendary);
 		addSetting(filterMythical);
@@ -129,6 +133,10 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 		stream = stream.filter(e -> {
 			Pokemon pokemon = e.getPokemon();
 			String name = pokemon.getSpecies().getName().toLowerCase();
+			
+			// Wild Only check
+			if(filterWildOnly.isChecked() && !pokemon.isWild())
+				return false;
 			
 			// Global Whitelist check (ALWAYS show)
 			if(!whitelistList.isEmpty() && whitelistList.contains(name))
