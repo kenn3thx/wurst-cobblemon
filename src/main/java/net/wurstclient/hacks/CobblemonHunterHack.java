@@ -9,6 +9,7 @@ package net.wurstclient.hacks;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -23,21 +24,27 @@ import net.minecraft.world.phys.Vec3;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
 import net.wurstclient.events.CameraTransformViewBobbingListener;
+import net.wurstclient.events.MouseUpdateListener;
 import net.wurstclient.events.RenderListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.EspBoxSizeSetting;
 import net.wurstclient.settings.EspStyleSetting;
+import net.wurstclient.settings.SliderSetting;
+import net.wurstclient.settings.SliderSetting.ValueDisplay;
 import net.wurstclient.settings.TextFieldSetting;
 import net.wurstclient.util.EntityUtils;
 import net.wurstclient.util.RenderUtils;
 import net.wurstclient.util.RenderUtils.ColoredBox;
 import net.wurstclient.util.RenderUtils.ColoredPoint;
+import net.wurstclient.util.Rotation;
+import net.wurstclient.util.RotationUtils;
 
-@SearchTags({"cobblemon esp", "pokemon esp", "PokeESP", "poke esp"})
-public final class CobblemonESPHack extends Hack implements UpdateListener,
-	CameraTransformViewBobbingListener, RenderListener
+@SearchTags({"cobblemon hunter", "pokemon hunter", "poke hunter",
+	"cobblemon esp"})
+public final class CobblemonHunterHack extends Hack implements UpdateListener,
+	MouseUpdateListener, CameraTransformViewBobbingListener, RenderListener
 {
 	private final EspStyleSetting style = new EspStyleSetting();
 	
@@ -46,7 +53,7 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 			+ "\u00a7lFancy\u00a7r mode shows slightly larger boxes that look better.");
 	
 	private final CheckboxSetting filterWildOnly =
-		new CheckboxSetting("Wild Only", "Only highlight wild Pokemon.", false);
+		new CheckboxSetting("Wild Only", "Only highlight wild Pokemon.", true);
 	
 	private final CheckboxSetting filterShiny =
 		new CheckboxSetting("Show Shiny", "Highlight shiny Pokemon.", true);
@@ -81,12 +88,30 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 				+ "Overrides rarity settings.",
 			"");
 	
-	private final ArrayList<PokemonEntity> pokemonList = new ArrayList<>();
+	private final CheckboxSetting autoAim = new CheckboxSetting("Auto Aim",
+		"Automatically look at high-priority Pokemon.", false);
 	
-	public CobblemonESPHack()
+	private final CheckboxSetting autoFollow =
+		new CheckboxSetting("Auto Follow", "Run towards the target.", false);
+	
+	private final SliderSetting followDistance = new SliderSetting(
+		"Follow Distance", "Distance to maintain from target.", 2.0, 1.0, 10.0,
+		0.5, ValueDisplay.DECIMAL);
+	
+	private final SliderSetting rotationSpeed =
+		new SliderSetting("Rotation Speed", 600, 10, 3600, 10,
+			ValueDisplay.DEGREES.withSuffix("/s"));
+	
+	private final ArrayList<PokemonEntity> pokemonList = new ArrayList<>();
+	private PokemonEntity target;
+	private float nextYaw;
+	private float nextPitch;
+	private boolean wasFollowing;
+	
+	public CobblemonHunterHack()
 	{
-		super("CobblemonESP");
-		setCategory(Category.RENDER);
+		super("CobblemonHunter");
+		setCategory(Category.OTHER);
 		addSetting(style);
 		addSetting(boxSize);
 		addSetting(filterWildOnly);
@@ -100,12 +125,16 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 		addSetting(filterCommon);
 		addSetting(showInvisible);
 		addSetting(whitelist);
+		addSetting(autoAim);
+		addSetting(autoFollow);
+		addSetting(followDistance);
 	}
 	
 	@Override
 	protected void onEnable()
 	{
 		EVENTS.add(UpdateListener.class, this);
+		EVENTS.add(MouseUpdateListener.class, this);
 		EVENTS.add(CameraTransformViewBobbingListener.class, this);
 		EVENTS.add(RenderListener.class, this);
 	}
@@ -114,14 +143,23 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 	protected void onDisable()
 	{
 		EVENTS.remove(UpdateListener.class, this);
+		EVENTS.remove(MouseUpdateListener.class, this);
 		EVENTS.remove(CameraTransformViewBobbingListener.class, this);
 		EVENTS.remove(RenderListener.class, this);
+		target = null;
+		if(wasFollowing)
+		{
+			MC.options.keyUp.setDown(false);
+			MC.options.keyJump.setDown(false);
+			wasFollowing = false;
+		}
 	}
 	
 	@Override
 	public void onUpdate()
 	{
 		pokemonList.clear();
+		target = null;
 		
 		Stream<PokemonEntity> stream = StreamSupport
 			.stream(MC.level.entitiesForRendering().spliterator(), false)
@@ -130,51 +168,139 @@ public final class CobblemonESPHack extends Hack implements UpdateListener,
 		
 		List<String> whitelistList = getWhitelist();
 		
-		stream = stream.filter(e -> {
+		// 1. Process all entities to build rendering list and find candidate
+		// targets
+		List<PokemonEntity> candidates = stream.filter(e -> {
 			Pokemon pokemon = e.getPokemon();
 			String name = pokemon.getSpecies().getName().toLowerCase();
 			
-			// Wild Only check
+			// 1.1 Wild Only filter (affects both ESP and Targeting)
 			if(filterWildOnly.isChecked() && !pokemon.isWild())
 				return false;
 			
-			// Global Whitelist check (ALWAYS show)
+			// 1.2 Rendering / Selection logic
+			boolean shouldRender = false;
+			
+			// Global Whitelist check
 			if(!whitelistList.isEmpty() && whitelistList.contains(name))
-				return true;
+				shouldRender = true;
 			
 			// Invisible check
-			if(e.isInvisible() && showInvisible.isChecked())
-				return true;
+			else if(e.isInvisible() && showInvisible.isChecked())
+				shouldRender = true;
 			
-			// Shiny check
-			if(pokemon.getShiny() && filterShiny.isChecked())
-				return true;
+			// Rarity/Shiny filters
+			else if(pokemon.getShiny() && filterShiny.isChecked())
+				shouldRender = true;
+			else if(pokemon.isLegendary() && filterLegendary.isChecked())
+				shouldRender = true;
+			else if(pokemon.isMythical() && filterMythical.isChecked())
+				shouldRender = true;
+			else if(pokemon.isUltraBeast() && filterUltraBeast.isChecked())
+				shouldRender = true;
+			else if(pokemon.hasLabels("ultra-rare")
+				&& filterUltraRare.isChecked())
+				shouldRender = true;
+			else if(pokemon.hasLabels("rare") && filterRare.isChecked())
+				shouldRender = true;
+			else if(pokemon.hasLabels("uncommon") && filterUncommon.isChecked())
+				shouldRender = true;
+			else if(filterCommon.isChecked())
+				shouldRender = true;
 			
-			// Rarity filters
-			if(pokemon.isLegendary() && filterLegendary.isChecked())
-				return true;
+			if(shouldRender)
+				pokemonList.add(e);
 			
-			if(pokemon.isMythical() && filterMythical.isChecked())
-				return true;
-			
-			if(pokemon.isUltraBeast() && filterUltraBeast.isChecked())
-				return true;
-			
-			if(pokemon.isUltraBeast()) // UB handled above, don't fall back to
-										// rarity
-				return false;
-			
-			// Fallback to rarity buckets for others
-			if(filterCommon.isChecked())
-				return true;
-			if(filterUncommon.isChecked() || filterRare.isChecked()
-				|| filterUltraRare.isChecked())
-				return true;
-			
-			return false;
-		});
+			return shouldRender;
+		}).collect(Collectors.toList());
 		
-		pokemonList.addAll(stream.collect(Collectors.toList()));
+		// 2. Select the best target according to priority scoring
+		target = candidates.stream().max(Comparator.comparingDouble(e -> {
+			Pokemon p = e.getPokemon();
+			double score = 0;
+			
+			if(p.isLegendary())
+				score += 10000;
+			else if(p.isMythical())
+				score += 9000;
+			else if(p.isUltraBeast())
+				score += 8000;
+			else if(p.hasLabels("ultra-rare"))
+				score += 1000;
+			else if(p.hasLabels("rare"))
+				score += 500;
+			
+			if(p.getShiny())
+				score += 5000;
+			
+			// Penalty for distance
+			score -= MC.player.distanceTo(e) * 10;
+			
+			return score;
+		})).orElse(null);
+		
+		// 3. Automation (Aim & Follow)
+		if(target != null)
+		{
+			// Auto Aim
+			if(autoAim.isChecked())
+			{
+				Rotation needed = RotationUtils
+					.getNeededRotations(target.getBoundingBox().getCenter());
+				
+				Rotation next = RotationUtils.slowlyTurnTowards(needed,
+					rotationSpeed.getValueI() / 20F);
+				nextYaw = next.yaw();
+				nextPitch = next.pitch();
+			}
+			
+			// Auto Follow
+			if(autoFollow.isChecked())
+			{
+				double horizDistSq = MC.player.distanceToSqr(target.getX(),
+					MC.player.getY(), target.getZ());
+				double followDistSq = Math.pow(followDistance.getValue(), 2);
+				
+				if(horizDistSq > followDistSq)
+				{
+					MC.options.keyUp.setDown(true);
+					MC.player.setSprinting(true);
+					wasFollowing = true;
+				}else if(wasFollowing)
+				{
+					MC.options.keyUp.setDown(false);
+					wasFollowing = false;
+				}
+				
+				// Auto Jump
+				if(MC.player.horizontalCollision && MC.player.onGround())
+					MC.player.jumpFromGround();
+			}
+		}else
+		{
+			// Reset movement if target is lost
+			if(wasFollowing)
+			{
+				MC.options.keyUp.setDown(false);
+				MC.options.keyJump.setDown(false);
+				wasFollowing = false;
+			}
+		}
+	}
+	
+	@Override
+	public void onMouseUpdate(MouseUpdateEvent event)
+	{
+		if(target == null || !autoAim.isChecked() || MC.player == null)
+			return;
+		
+		float curYaw = MC.player.getYRot();
+		float curPitch = MC.player.getXRot();
+		float diffYaw = nextYaw - curYaw;
+		float diffPitch = nextPitch - curPitch;
+		
+		event.setDeltaX(event.getDefaultDeltaX() + diffYaw);
+		event.setDeltaY(event.getDefaultDeltaY() + diffPitch);
 	}
 	
 	private List<String> getWhitelist()
