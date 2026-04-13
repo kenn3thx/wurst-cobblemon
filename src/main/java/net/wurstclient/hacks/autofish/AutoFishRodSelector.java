@@ -24,7 +24,7 @@ import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.wurstclient.WurstClient;
-import net.wurstclient.hacks.AutoFishHack;
+import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.Setting;
 import net.wurstclient.util.ChatUtils;
@@ -44,10 +44,10 @@ public final class AutoFishRodSelector
 		"If enabled, AutoFish will turn itself off when your inventory is full.",
 		false);
 	
-	private final AutoFishHack autoFish;
+	private final Hack autoFish;
 	private int bestRodSlot;
 	
-	public AutoFishRodSelector(AutoFishHack autoFish)
+	public AutoFishRodSelector(Hack autoFish)
 	{
 		this.autoFish = autoFish;
 	}
