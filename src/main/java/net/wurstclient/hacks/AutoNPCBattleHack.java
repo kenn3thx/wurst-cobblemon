@@ -39,7 +39,12 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		"The range at which to talk to the NPC.", 3.0, 1.0, 6.0, 0.1,
 		ValueDisplay.DECIMAL);
 	
+	private final SliderSetting talkDelay = new SliderSetting("Talk Delay",
+		"Wait this long before talking to an NPC again after closing a dialogue.",
+		2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL.withSuffix("s"));
+	
 	private int talkTimer;
+	private boolean wasDialogueOpen;
 	
 	public AutoNPCBattleHack()
 	{
@@ -48,6 +53,7 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		addSetting(npcName);
 		addSetting(autoTalk);
 		addSetting(talkRange);
+		addSetting(talkDelay);
 	}
 	
 	@Override
@@ -75,7 +81,14 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		if(screen != null && isDialogueScreen(screen))
 		{
 			handleDialogue(screen);
+			wasDialogueOpen = true;
 			return;
+		}
+		
+		if(wasDialogueOpen)
+		{
+			talkTimer = (int)(talkDelay.getValue() * 20);
+			wasDialogueOpen = false;
 		}
 		
 		// If no screen is open, look for NPC to talk to
