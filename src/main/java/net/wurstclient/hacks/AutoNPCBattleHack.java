@@ -7,14 +7,16 @@
  */
 package net.wurstclient.hacks;
 
+import java.lang.reflect.Field;
+import java.util.List;
 import java.util.stream.StreamSupport;
 
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
 import net.wurstclient.events.UpdateListener;
@@ -23,28 +25,26 @@ import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.SliderSetting;
 import net.wurstclient.settings.SliderSetting.ValueDisplay;
 import net.wurstclient.settings.TextFieldSetting;
+import net.wurstclient.util.ChatUtils;
 
-@SearchTags({"auto npc battle", "auto talk", "npc battle", "cobblemon npc"})
+@SearchTags({"auto npc battle", "ui clicker", "cobblemon npc"})
 public final class AutoNPCBattleHack extends Hack implements UpdateListener
 {
-	private final TextFieldSetting npcName = new TextFieldSetting("NPC Name",
-		"The name of the NPC to automatically talk to.\n"
-			+ "Leave empty to talk to any NPC.",
-		"");
-	
-	private final CheckboxSetting autoTalk = new CheckboxSetting("Auto Talk",
-		"Automatically talk to the NPC when in range.", true);
-	
-	private final SliderSetting talkRange = new SliderSetting("Talk Range",
-		"The range at which to talk to the NPC.", 3.0, 1.0, 6.0, 0.1,
-		ValueDisplay.DECIMAL);
-	
-	private final SliderSetting talkDelay = new SliderSetting("Talk Delay",
-		"Wait this long before talking to an NPC again after closing a dialogue.",
-		2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL.withSuffix("s"));
+	private final TextFieldSetting npcName =
+		new TextFieldSetting("NPC Name", "Target NPC.", "");
+	private final CheckboxSetting autoTalk =
+		new CheckboxSetting("Auto Talk", "Auto interact.", true);
+	private final SliderSetting talkRange = new SliderSetting("Range",
+		"Talk distance.", 4.0, 1.0, 6.0, 0.1, ValueDisplay.DECIMAL);
+	private final CheckboxSetting debugMode =
+		new CheckboxSetting("Debug Mode", "Detailed interaction logs.", true);
 	
 	private int talkTimer;
-	private boolean wasDialogueOpen;
+	private int actionCooldown;
+	
+	// Battle button animation tracking
+	private boolean battleButtonSeen = false;
+	private int battleButtonWaitTicks = 0;
 	
 	public AutoNPCBattleHack()
 	{
@@ -53,13 +53,16 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		addSetting(npcName);
 		addSetting(autoTalk);
 		addSetting(talkRange);
-		addSetting(talkDelay);
+		addSetting(debugMode);
 	}
 	
 	@Override
 	protected void onEnable()
 	{
 		talkTimer = 0;
+		actionCooldown = 0;
+		battleButtonSeen = false;
+		battleButtonWaitTicks = 0;
 		EVENTS.add(UpdateListener.class, this);
 	}
 	
@@ -74,28 +77,31 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 	{
 		if(talkTimer > 0)
 			talkTimer--;
+		if(actionCooldown > 0)
+			actionCooldown--;
 		
 		Screen screen = MC.screen;
 		
-		// If a dialogue screen is open
 		if(screen != null && isDialogueScreen(screen))
 		{
-			handleDialogue(screen);
-			wasDialogueOpen = true;
+			try
+			{
+				handleDialoguePureUI(screen);
+			}catch(Throwable t)
+			{
+				if(debugMode.isChecked() && actionCooldown <= 0)
+					ChatUtils
+						.error("Safeguard: " + t.getClass().getSimpleName());
+			}
 			return;
 		}
 		
-		if(wasDialogueOpen)
-		{
-			talkTimer = (int)(talkDelay.getValue() * 20);
-			wasDialogueOpen = false;
-		}
+		// Reset battle button tracking when dialogue closes
+		battleButtonSeen = false;
+		battleButtonWaitTicks = 0;
 		
-		// If no screen is open, look for NPC to talk to
 		if(screen == null && autoTalk.isChecked() && talkTimer <= 0)
-		{
 			findAndTalkToNPC();
-		}
 	}
 	
 	private void findAndTalkToNPC()
@@ -114,45 +120,107 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		if(target != null)
 		{
 			MC.gameMode.interact(MC.player, target, InteractionHand.MAIN_HAND);
-			talkTimer = 20; // Wait 1 second before trying again
+			talkTimer = 40;
 		}
 	}
 	
-	private void handleDialogue(Screen screen)
+	private void handleDialoguePureUI(Screen screen)
 	{
-		// Detect "Battle" button based on localization
-		String battleText = I18n.get("cobblemon.ui.dialogue.battle");
+		if(actionCooldown > 0)
+			return;
 		
-		// Modern Minecraft screens have renderables list (widened in Wurst)
-		for(Renderable renderable : screen.renderables)
+		// 1. FORCE TEXT TO FINISH RENDERING
+		Boolean gibberDone = (Boolean)getFieldValue(screen, "gibberDone");
+		if(gibberDone != null && !gibberDone)
+			setFieldValue(screen, "gibberDone", true);
+		
+		// 2. CHECK FOR BATTLE BUTTON
+		List<?> options =
+			(List<?>)getFieldValue(screen, "dialogueOptionWidgets");
+		if(options != null && !options.isEmpty())
 		{
-			if(!(renderable instanceof AbstractWidget widget))
-				continue;
-			
-			String widgetText = widget.getMessage().getString();
-			
-			// Click the "Battle" button
-			if(widgetText.equalsIgnoreCase(battleText))
+			String battleText =
+				I18n.get("cobblemon.ui.dialogue.battle").toLowerCase();
+			for(Object opt : options)
 			{
-				clickWidget(screen, widget);
-				return;
+				if(opt instanceof AbstractWidget widget)
+				{
+					String text = widget.getMessage().getString()
+						.replaceAll("§[0-9a-fklmnor]", "").toLowerCase();
+					if(text.contains(battleText) || text.contains("battle"))
+					{
+						// ANIMATION LOCK FIX:
+						// First time we see the button -> start wait timer
+						if(!battleButtonSeen)
+						{
+							battleButtonSeen = true;
+							battleButtonWaitTicks = 0;
+							if(debugMode.isChecked())
+								ChatUtils.message(
+									"§e[UI] Battle button found, waiting for animation...");
+							return;
+						}
+						
+						// Count ticks since we first saw the button
+						battleButtonWaitTicks++;
+						
+						// Wait at least 10 ticks (0.5s) for animation
+						if(battleButtonWaitTicks < 10)
+							return;
+						
+						// Check if widget is actually active/ready
+						if(!widget.active)
+						{
+							if(debugMode.isChecked())
+								ChatUtils.message(
+									"§e[UI] Button not active yet, waiting...");
+							return;
+						}
+						
+						if(debugMode.isChecked())
+							ChatUtils.message(
+								"§a[UI] Clicking Battle (gentle, after "
+									+ battleButtonWaitTicks + " ticks)");
+							
+						// GENTLE CLICK: Only use screen.mouseClicked
+						// This is exactly what Minecraft does when you
+						// physically click your mouse
+						double cx = widget.getX() + (widget.getWidth() / 2.0);
+						double cy = widget.getY() + (widget.getHeight() / 2.0);
+						
+						screen.mouseClicked(cx, cy, 0);
+						screen.mouseReleased(cx, cy, 0);
+						
+						actionCooldown = 30;
+						battleButtonSeen = false;
+						battleButtonWaitTicks = 0;
+						return;
+					}
+				}
 			}
 		}
 		
-		// If no battle button found, try to progress the dialogue by clicking
-		// (simulating space/left click)
-		// Usually Cobblemon dialogues progress on any click if there are no
-		// options.
-		// We'll simulate a click if the dialogue is "waiting for input"
-		if(isWaitingForDialogueInput(screen))
+		// 3. SKIP DIALOGUE (no battle option yet)
+		if(options == null || options.isEmpty())
 		{
-			// Simulate clicking anywhere in the screen center to progress
-			MC.mouseHandler.onPress(MC.getWindow().getWindow(), 0, 1, 0); // Left
-																			// Click
-																			// Down
-			MC.mouseHandler.onPress(MC.getWindow().getWindow(), 0, 0, 0); // Left
-																			// Click
-																			// Up
+			// Reset battle button tracking if options disappear
+			battleButtonSeen = false;
+			battleButtonWaitTicks = 0;
+			
+			if(debugMode.isChecked())
+				ChatUtils.message("§e[UI] Clicking Screen to Skip");
+			
+			double middleX = screen.width / 2.0;
+			double bottomY = screen.height - 20.0;
+			double middleY = screen.height / 2.0;
+			
+			screen.mouseClicked(middleX, bottomY, 0);
+			screen.mouseReleased(middleX, bottomY, 0);
+			
+			screen.mouseClicked(middleX, middleY, 0);
+			screen.mouseReleased(middleX, middleY, 0);
+			
+			actionCooldown = 15;
 		}
 	}
 	
@@ -163,28 +231,54 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 			|| className.contains("DialogueGui");
 	}
 	
-	private boolean isWaitingForDialogueInput(Screen screen)
-	{
-		// This is a heuristic. Usually, if there are no option buttons and it's
-		// a DialogueScreen,
-		// it's a text page waiting to be continued.
-		// We avoid clicking if there are other interactive widgets that aren't
-		// the "Battle" button.
-		return true; // Simplified for Phase 1
-	}
-	
 	private boolean isCobblemonNPC(Entity e)
 	{
 		String className = e.getClass().getName();
-		// Common Cobblemon NPC entity classes
 		return className.contains("com.cobblemon.mod.common.entity.npc")
 			|| className.contains("com.cobblemon.mod.common.entity.trainer");
 	}
 	
-	private void clickWidget(Screen screen, AbstractWidget widget)
+	private void setFieldValue(Object obj, String fieldName, Object value)
 	{
-		double x = widget.getX() + widget.getWidth() / 2.0;
-		double y = widget.getY() + widget.getHeight() / 2.0;
-		screen.mouseClicked(x, y, 0); // 0 is Left Click
+		try
+		{
+			Class<?> clazz = obj.getClass();
+			while(clazz != null && clazz != Object.class)
+			{
+				try
+				{
+					Field field = clazz.getDeclaredField(fieldName);
+					field.setAccessible(true);
+					field.set(obj, value);
+					return;
+				}catch(NoSuchFieldException e)
+				{
+					clazz = clazz.getSuperclass();
+				}
+			}
+		}catch(Exception e)
+		{}
+	}
+	
+	private Object getFieldValue(Object obj, String fieldName)
+	{
+		try
+		{
+			Class<?> clazz = obj.getClass();
+			while(clazz != null && clazz != Object.class)
+			{
+				try
+				{
+					Field field = clazz.getDeclaredField(fieldName);
+					field.setAccessible(true);
+					return field.get(obj);
+				}catch(NoSuchFieldException e)
+				{
+					clazz = clazz.getSuperclass();
+				}
+			}
+		}catch(Exception e)
+		{}
+		return null;
 	}
 }
