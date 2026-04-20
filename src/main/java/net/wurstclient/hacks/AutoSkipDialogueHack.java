@@ -56,6 +56,12 @@ public final class AutoSkipDialogueHack extends Hack implements UpdateListener
 		EVENTS.remove(UpdateListener.class, this);
 	}
 	
+	private Class<?> cachedScreenClass;
+	private boolean isDialogueScreenCached;
+	
+	private Field gibberDoneField;
+	private Field optionsWidgetsField;
+	
 	@Override
 	public void onUpdate()
 	{
@@ -70,21 +76,19 @@ public final class AutoSkipDialogueHack extends Hack implements UpdateListener
 			return;
 		
 		// 1. Force text animation to finish instantly
-		Boolean gibberDone = (Boolean)getFieldValue(screen, "gibberDone");
+		Boolean gibberDone = getGibberDone(screen);
 		if(gibberDone != null && !gibberDone)
 		{
-			setFieldValue(screen, "gibberDone", true);
+			setGibberDone(screen, true);
 			if(!instantSkip.isChecked())
 			{
 				cooldown = 1;
 				return;
 			}
-		} // <- Added closing brace here
+		}
 		
 		// 2. Check if option buttons are visible (final choices)
-		// If options are showing, STOP skipping - let the user choose
-		List<?> options =
-			(List<?>)getFieldValue(screen, "dialogueOptionWidgets");
+		List<?> options = getOptionsWidgets(screen);
 		if(options != null && !options.isEmpty())
 			return;
 		
@@ -104,52 +108,78 @@ public final class AutoSkipDialogueHack extends Hack implements UpdateListener
 	
 	private boolean isDialogueScreen(Screen screen)
 	{
-		String className = screen.getClass().getName();
-		return className.contains("DialogueScreen")
-			|| className.contains("DialogueGui");
+		Class<?> currClass = screen.getClass();
+		if(cachedScreenClass != currClass)
+		{
+			cachedScreenClass = currClass;
+			String className = currClass.getName();
+			isDialogueScreenCached = className.contains("DialogueScreen")
+				|| className.contains("DialogueGui");
+			
+			// Reset reflection fields for new screen type
+			gibberDoneField = null;
+			optionsWidgetsField = null;
+		}
+		return isDialogueScreenCached;
 	}
 	
-	private void setFieldValue(Object obj, String fieldName, Object value)
+	private Boolean getGibberDone(Screen screen)
 	{
 		try
 		{
-			Class<?> clazz = obj.getClass();
-			while(clazz != null && clazz != Object.class)
+			if(gibberDoneField == null)
 			{
-				try
-				{
-					Field field = clazz.getDeclaredField(fieldName);
-					field.setAccessible(true);
-					field.set(obj, value);
-					return;
-				}catch(NoSuchFieldException e)
-				{
-					clazz = clazz.getSuperclass();
-				}
+				gibberDoneField = findField(screen.getClass(), "gibberDone");
+				if(gibberDoneField != null)
+					gibberDoneField.setAccessible(true);
 			}
+			if(gibberDoneField != null)
+				return (Boolean)gibberDoneField.get(screen);
+		}catch(Exception e)
+		{}
+		return null;
+	}
+	
+	private void setGibberDone(Screen screen, boolean value)
+	{
+		try
+		{
+			if(gibberDoneField != null)
+				gibberDoneField.set(screen, value);
 		}catch(Exception e)
 		{}
 	}
 	
-	private Object getFieldValue(Object obj, String fieldName)
+	private List<?> getOptionsWidgets(Screen screen)
 	{
 		try
 		{
-			Class<?> clazz = obj.getClass();
-			while(clazz != null && clazz != Object.class)
+			if(optionsWidgetsField == null)
 			{
-				try
-				{
-					Field field = clazz.getDeclaredField(fieldName);
-					field.setAccessible(true);
-					return field.get(obj);
-				}catch(NoSuchFieldException e)
-				{
-					clazz = clazz.getSuperclass();
-				}
+				optionsWidgetsField =
+					findField(screen.getClass(), "dialogueOptionWidgets");
+				if(optionsWidgetsField != null)
+					optionsWidgetsField.setAccessible(true);
 			}
+			if(optionsWidgetsField != null)
+				return (List<?>)optionsWidgetsField.get(screen);
 		}catch(Exception e)
 		{}
+		return null;
+	}
+	
+	private Field findField(Class<?> clazz, String fieldName)
+	{
+		while(clazz != null && clazz != Object.class)
+		{
+			try
+			{
+				return clazz.getDeclaredField(fieldName);
+			}catch(NoSuchFieldException e)
+			{
+				clazz = clazz.getSuperclass();
+			}
+		}
 		return null;
 	}
 }

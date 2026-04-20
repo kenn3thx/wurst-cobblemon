@@ -72,6 +72,12 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 		EVENTS.remove(UpdateListener.class, this);
 	}
 	
+	private Class<?> cachedScreenClass;
+	private boolean isDialogueScreenCached;
+	
+	private Field gibberDoneField;
+	private Field optionsWidgetsField;
+	
 	@Override
 	public void onUpdate()
 	{
@@ -106,6 +112,9 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 	
 	private void findAndTalkToNPC()
 	{
+		// Only check every 10 ticks to reduce lag
+		talkTimer = 10;
+		
 		String targetName = npcName.getValue().trim().toLowerCase();
 		double rangeSq = Math.pow(talkRange.getValue(), 2);
 		
@@ -130,13 +139,12 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 			return;
 		
 		// 1. FORCE TEXT TO FINISH RENDERING
-		Boolean gibberDone = (Boolean)getFieldValue(screen, "gibberDone");
+		Boolean gibberDone = getGibberDone(screen);
 		if(gibberDone != null && !gibberDone)
-			setFieldValue(screen, "gibberDone", true);
+			setGibberDone(screen, true);
 		
 		// 2. CHECK FOR BATTLE BUTTON
-		List<?> options =
-			(List<?>)getFieldValue(screen, "dialogueOptionWidgets");
+		List<?> options = getOptionsWidgets(screen);
 		if(options != null && !options.isEmpty())
 		{
 			String battleText =
@@ -226,59 +234,85 @@ public final class AutoNPCBattleHack extends Hack implements UpdateListener
 	
 	private boolean isDialogueScreen(Screen screen)
 	{
-		String className = screen.getClass().getName();
-		return className.contains("DialogueScreen")
-			|| className.contains("DialogueGui");
+		Class<?> currClass = screen.getClass();
+		if(cachedScreenClass != currClass)
+		{
+			cachedScreenClass = currClass;
+			String className = currClass.getName();
+			isDialogueScreenCached = className.contains("DialogueScreen")
+				|| className.contains("DialogueGui");
+			
+			// Reset reflection fields for new screen type
+			gibberDoneField = null;
+			optionsWidgetsField = null;
+		}
+		return isDialogueScreenCached;
 	}
 	
 	private boolean isCobblemonNPC(Entity e)
 	{
-		String className = e.getClass().getName();
-		return className.contains("com.cobblemon.mod.common.entity.npc")
-			|| className.contains("com.cobblemon.mod.common.entity.trainer");
+		Class<?> clazz = e.getClass();
+		String className = clazz.getName();
+		return className.contains("npc") || className.contains("trainer");
 	}
 	
-	private void setFieldValue(Object obj, String fieldName, Object value)
+	private Boolean getGibberDone(Screen screen)
 	{
 		try
 		{
-			Class<?> clazz = obj.getClass();
-			while(clazz != null && clazz != Object.class)
+			if(gibberDoneField == null)
 			{
-				try
-				{
-					Field field = clazz.getDeclaredField(fieldName);
-					field.setAccessible(true);
-					field.set(obj, value);
-					return;
-				}catch(NoSuchFieldException e)
-				{
-					clazz = clazz.getSuperclass();
-				}
+				gibberDoneField = findField(screen.getClass(), "gibberDone");
+				if(gibberDoneField != null)
+					gibberDoneField.setAccessible(true);
 			}
+			if(gibberDoneField != null)
+				return (Boolean)gibberDoneField.get(screen);
+		}catch(Exception e)
+		{}
+		return null;
+	}
+	
+	private void setGibberDone(Screen screen, boolean value)
+	{
+		try
+		{
+			if(gibberDoneField != null)
+				gibberDoneField.set(screen, value);
 		}catch(Exception e)
 		{}
 	}
 	
-	private Object getFieldValue(Object obj, String fieldName)
+	private List<?> getOptionsWidgets(Screen screen)
 	{
 		try
 		{
-			Class<?> clazz = obj.getClass();
-			while(clazz != null && clazz != Object.class)
+			if(optionsWidgetsField == null)
 			{
-				try
-				{
-					Field field = clazz.getDeclaredField(fieldName);
-					field.setAccessible(true);
-					return field.get(obj);
-				}catch(NoSuchFieldException e)
-				{
-					clazz = clazz.getSuperclass();
-				}
+				optionsWidgetsField =
+					findField(screen.getClass(), "dialogueOptionWidgets");
+				if(optionsWidgetsField != null)
+					optionsWidgetsField.setAccessible(true);
 			}
+			if(optionsWidgetsField != null)
+				return (List<?>)optionsWidgetsField.get(screen);
 		}catch(Exception e)
 		{}
+		return null;
+	}
+	
+	private Field findField(Class<?> clazz, String fieldName)
+	{
+		while(clazz != null && clazz != Object.class)
+		{
+			try
+			{
+				return clazz.getDeclaredField(fieldName);
+			}catch(NoSuchFieldException e)
+			{
+				clazz = clazz.getSuperclass();
+			}
+		}
 		return null;
 	}
 }
