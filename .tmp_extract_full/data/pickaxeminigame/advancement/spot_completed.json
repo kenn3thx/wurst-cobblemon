@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:beacon"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.spot_completed.title",
+      "fallback": "Fully Excavated"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.spot_completed.description",
+      "fallback": "Complete all layers of a mining spot"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:double_clear",
+  "criteria": {
+    "spot_completed": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

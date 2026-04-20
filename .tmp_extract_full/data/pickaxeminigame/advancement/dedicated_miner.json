@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:golden_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.dedicated_miner.title",
+      "fallback": "Dedicated Miner"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.dedicated_miner.description",
+      "fallback": "Complete 50 mining spots"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:first_complete",
+  "criteria": {
+    "fifty_spots": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

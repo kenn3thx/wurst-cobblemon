@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:deepslate_diamond_ore"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.very_large_spot_10.title",
+      "fallback": "Vein Hunter"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.very_large_spot_10.description",
+      "fallback": "Discover 10 Very Large deposits"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:very_large_spot_5",
+  "criteria": {
+    "very_large_spot_10": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

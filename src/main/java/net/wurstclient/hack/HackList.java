@@ -52,6 +52,7 @@ public final class HackList implements UpdateListener
 	public final AutoFarmHack autoFarmHack = new AutoFarmHack();
 	public final AutoFishHack autoFishHack = new AutoFishHack();
 	public final AutoMineHack autoMineHack = new AutoMineHack();
+	public final AutoMiningHack autoMiningHack = new AutoMiningHack();
 	public final AutoNPCBattleHack autoNpcBattleHack = new AutoNPCBattleHack();
 	public final AutoPotionHack autoPotionHack = new AutoPotionHack();
 	public final AutoReconnectHack autoReconnectHack = new AutoReconnectHack();
@@ -85,6 +86,11 @@ public final class HackList implements UpdateListener
 	public final ChestEspHack chestEspHack = new ChestEspHack();
 	public final ClickAuraHack clickAuraHack = new ClickAuraHack();
 	public final ClickGuiHack clickGuiHack = new ClickGuiHack();
+	public final CobbleLootEspHack cobbleLootEspHack = new CobbleLootEspHack();
+	public final CobbleMiningEspHack cobbleMiningEspHack =
+		new CobbleMiningEspHack();
+	public final CobbleMiningInteractHack cobbleMiningInteractHack =
+		new CobbleMiningInteractHack();
 	public final CobblemonHunterHack cobblemonHunterHack =
 		new CobblemonHunterHack();
 	public final CrashChestHack crashChestHack = new CrashChestHack();

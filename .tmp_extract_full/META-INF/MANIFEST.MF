@@ -1,0 +1,26 @@
+Manifest-Version: 1.0
+Fabric-Jar-Type: classes
+Fabric-Loom-Client-Only-Entries: handyfon/pickaxeminigame/client/MiningM
+ usicHandler$MinigameMusicInstance.class;handyfon/pickaxeminigame/client
+ /MiningMusicHandler.class;handyfon/pickaxeminigame/client/Pickaxeminiga
+ meClient.class;handyfon/pickaxeminigame/client/PickaxeminigameDataGener
+ ator.class;handyfon/pickaxeminigame/client/minigame/DigDialogScreen.cla
+ ss;handyfon/pickaxeminigame/client/minigame/InteractionManager.class;ha
+ ndyfon/pickaxeminigame/client/minigame/MiningMinigameScreen$1.class;han
+ dyfon/pickaxeminigame/client/minigame/MiningMinigameScreen$Debris.class
+ ;handyfon/pickaxeminigame/client/minigame/MiningMinigameScreen$Sparkle.
+ class;handyfon/pickaxeminigame/client/minigame/MiningMinigameScreen$Tnt
+ Particle.class;handyfon/pickaxeminigame/client/minigame/MiningMinigameS
+ creen.class;pickaxeminigame.client.mixins.json
+Fabric-Loom-Mixin-Remap-Type: static
+Fabric-Loom-Split-Environment: true
+Fabric-Gradle-Version: 9.2.1
+Fabric-Loom-Version: 1.14.10
+Fabric-Mixin-Compile-Extensions-Version: 0.6.0
+Fabric-Minecraft-Version: 1.21.1
+Fabric-Tiny-Remapper-Version: 0.12.2
+Fabric-Loader-Version: 0.17.2
+Fabric-Mixin-Version: 0.16.3+mixin.0.8.7
+Fabric-Mixin-Group: net.fabricmc
+Fabric-Mapping-Namespace: intermediary
+

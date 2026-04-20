@@ -1,0 +1,11 @@
+{
+  "sinnoh_underground": {
+    "category": "music",
+    "sounds": [
+      {
+        "name": "pickaxeminigame:sinnoh_underground",
+        "stream": true
+      }
+    ]
+  }
+}

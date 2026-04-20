@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:netherite_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.penta_clear.title",
+      "fallback": "Penta-Miner"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.penta_clear.description",
+      "fallback": "Clear 5 layers in the same spot"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:quad_clear",
+  "criteria": {
+    "penta_clear": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

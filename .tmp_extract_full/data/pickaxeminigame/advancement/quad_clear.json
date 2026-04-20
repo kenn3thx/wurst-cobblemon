@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:diamond_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.quad_clear.title",
+      "fallback": "Quadruple Strike"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.quad_clear.description",
+      "fallback": "Clear 4 layers in the same spot"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:triple_clear",
+  "criteria": {
+    "quad_clear": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

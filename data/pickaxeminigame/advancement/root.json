@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:iron_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.root.title",
+      "fallback": "Mining Minigame"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.root.description",
+      "fallback": "Discover your first mining spot"
+    },
+    "background": "minecraft:textures/block/deepslate.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "find_spot": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

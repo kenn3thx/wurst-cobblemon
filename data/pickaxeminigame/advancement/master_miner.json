@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:netherite_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.master_miner.title",
+      "fallback": "Master Miner"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.master_miner.description",
+      "fallback": "Complete 100 mining spots"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:dedicated_miner",
+  "criteria": {
+    "hundred_spots": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:stone_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.pickaxe_only.title",
+      "fallback": "Precision Mining"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.pickaxe_only.description",
+      "fallback": "Clear a layer using only the pickaxe"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:first_complete",
+  "criteria": {
+    "pickaxe_only": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:raw_gold_block"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.large_spot_10.title",
+      "fallback": "Large Collector"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.large_spot_10.description",
+      "fallback": "Discover 10 Large deposits"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:large_spot_5",
+  "criteria": {
+    "large_spot_10": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

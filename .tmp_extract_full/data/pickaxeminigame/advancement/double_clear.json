@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:diamond_pickaxe"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.double_clear.title",
+      "fallback": "Double Down"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.double_clear.description",
+      "fallback": "Clear two screens in the same spot"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:first_complete",
+  "criteria": {
+    "double_clear": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

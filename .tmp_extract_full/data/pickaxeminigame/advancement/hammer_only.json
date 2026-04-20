@@ -1,0 +1,25 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:iron_block"
+    },
+    "title": {
+      "translate": "advancement.pickaxeminigame.hammer_only.title",
+      "fallback": "Hammer Time"
+    },
+    "description": {
+      "translate": "advancement.pickaxeminigame.hammer_only.description",
+      "fallback": "Clear a layer using only the hammer"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "parent": "pickaxeminigame:first_complete",
+  "criteria": {
+    "hammer_only": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
