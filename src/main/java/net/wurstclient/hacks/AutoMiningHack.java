@@ -10,26 +10,32 @@ package net.wurstclient.hacks;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.network.protocol.game.ClientboundTakeItemEntityPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
+import net.wurstclient.events.PacketInputListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.SliderSetting;
 import net.wurstclient.settings.SliderSetting.ValueDisplay;
 
-@SearchTags({"auto mining", "mining minigame bot", "fossil miner",
-	"item filter"})
-public final class AutoMiningHack extends Hack implements UpdateListener
+@SearchTags({"auto mining", "mining minigame bot", "fossil miner", "item filter", "stealth dropper"})
+public final class AutoMiningHack extends Hack
+	implements UpdateListener, PacketInputListener
 {
 	private final SliderSetting delay = new SliderSetting("Delay",
 		"Ticks between each hit.", 2, 1, 20, 1, ValueDisplay.INTEGER);
@@ -39,21 +45,27 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 		"Stops mining before the wall collapses to save the node for later.",
 		true);
 	
-	private final SliderSetting minStability = new SliderSetting(
-		"Min Stability", "Stop mining if wall stability is below this.", 5, 0,
-		20, 1, ValueDisplay.INTEGER);
+	private final SliderSetting minStability = new SliderSetting("Min Stability",
+		"Stop mining if wall stability is below this.", 5, 0, 20, 1,
+		ValueDisplay.INTEGER);
 	
-	private final CheckboxSetting autoHammer =
-		new CheckboxSetting("Auto Hammer",
-			"Automatically uses the Hammer (3x3) for efficiency.", true);
+	private final CheckboxSetting autoHammer = new CheckboxSetting("Auto Hammer",
+		"Automatically uses the Hammer (3x3) for efficiency.", true);
 	
 	private final CheckboxSetting avoidBedrock = new CheckboxSetting(
 		"Avoid Bedrock", "Never hit bedrock tiles to save stability.", true);
 	
-	// Item Filters
-	private final Map<String, CheckboxSetting> filters = new HashMap<>();
+	private final CheckboxSetting continuousDrop = new CheckboxSetting(
+		"Continuous Drop",
+		"Automatically drops unwanted items whenever they are picked up.", true);
+	
+	private long lastDropTime;
+	private final Map<String, CheckboxSetting> masterFilters =
+		new LinkedHashMap<>();
+	private final Map<String, CheckboxSetting> filters = new LinkedHashMap<>();
 	private final Map<Item, Integer> inventorySnapshot = new HashMap<>();
 	private boolean wasInGame;
+	private boolean needsCleanup;
 	
 	private int cooldown;
 	
@@ -84,58 +96,106 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 		addSetting(minStability);
 		addSetting(autoHammer);
 		addSetting(avoidBedrock);
+		addSetting(continuousDrop);
 		
 		initFilters();
 	}
 	
 	private void initFilters()
 	{
-		// Fossils
+		// Fossils Category
+		CheckboxSetting masterFossil =
+			addMasterFilter("Drop All: Fossils", "fossils");
 		String[] fossils = {"helix_fossil", "dome_fossil", "old_amber",
 			"root_fossil", "claw_fossil", "armor_fossil", "cover_fossil",
-			"plume_fossil", "jaw_fossil", "sail_fossil"};
+			"plume_fossil", "jaw_fossil", "sail_fossil", "skull_fossil",
+			"fossilized_bird", "fossilized_fish", "fossilized_dino",
+			"fossilized_drake"};
 		for(String f : fossils)
-			addFilter("Fossil: " + f, "cobblemon:" + f);
+		{
+			String name = f.replace("_", " ");
+			addFilter("Fossil: " + name, "cobblemon:" + f, masterFossil);
+		}
 		
-		// Tera Shards
+		// Tera Category
+		CheckboxSetting masterTera =
+			addMasterFilter("Drop All: Tera Shards", "tera");
 		String[] types = {"fire", "water", "grass", "electric", "ice",
 			"fighting", "poison", "ground", "flying", "psychic", "bug", "rock",
-			"ghost", "dragon", "dark", "steel", "fairy", "stellar"};
+			"ghost", "dragon", "dark", "steel", "fairy", "stellar", "normal"};
 		for(String t : types)
-			addFilter("Tera: " + t, "mega_showdown:" + t + "_tera_shard");
+			addFilter("Tera: " + t, "mega_showdown:" + t + "_tera_shard",
+				masterTera);
 		
-		// Evolution Stones
+		// Stones Category
+		CheckboxSetting masterStone =
+			addMasterFilter("Drop All: Stones", "stones");
 		String[] stones = {"thunder_stone", "leaf_stone", "moon_stone",
-			"sun_stone", "shiny_stone", "dusk_stone", "dawn_stone",
-			"fire_stone", "water_stone"};
+			"sun_stone", "shiny_stone", "dusk_stone", "dawn_stone", "fire_stone",
+			"water_stone", "everstone"};
 		for(String s : stones)
-			addFilter("Stone: " + s, "cobblemon:" + s);
+		{
+			String name = s.replace("_", " ");
+			addFilter("Stone: " + name, "cobblemon:" + s, masterStone);
+		}
 		
-		// Mega Items
-		addFilter("Mega: Blank stone", "mega_showdown:blank_mega_stone");
-		addFilter("Mega: Key stone", "mega_showdown:key_stone");
-		addFilter("Mega: Z-Crystal", "mega_showdown:blank_z_crystal");
-		addFilter("Mega: Wishing star", "mega_showdown:wishing_star");
+		// Gems Category
+		CheckboxSetting masterGem = addMasterFilter("Drop All: Gems", "gems");
+		for(String t : types)
+		{
+			if(t.equals("stellar"))
+				continue;
+			addFilter("Gem: " + t, "cobblemon:" + t + "_gem", masterGem);
+		}
 		
-		// Ores
-		addFilter("Ore: Diamond", "minecraft:diamond");
-		addFilter("Ore: Emerald", "minecraft:emerald");
-		addFilter("Ore: Gold", "minecraft:gold_ingot");
-		addFilter("Ore: Iron", "minecraft:iron_ingot");
-		addFilter("Ore: Netherite", "minecraft:netherite_scrap");
+		// Ores Category
+		CheckboxSetting masterOre = addMasterFilter("Drop All: Ores", "ores");
+		addFilter("Ore: Diamond", "minecraft:diamond", masterOre);
+		addFilter("Ore: Emerald", "minecraft:emerald", masterOre);
+		addFilter("Ore: Gold", "minecraft:gold_ingot", masterOre);
+		addFilter("Ore: Iron", "minecraft:iron_ingot", masterOre);
+		addFilter("Ore: Copper", "minecraft:copper_ingot", masterOre);
+		addFilter("Ore: Redstone", "minecraft:redstone", masterOre);
+		addFilter("Ore: Lapis", "minecraft:lapis_lazuli", masterOre);
+		addFilter("Ore: Quartz", "minecraft:quartz", masterOre);
+		addFilter("Ore: Coal", "minecraft:coal", masterOre);
 		
-		// Tumblestones
-		addFilter("Other: Tumblestone", "cobblemon:tumblestone");
-		addFilter("Other: Sky Tumblestone", "cobblemon:sky_tumblestone");
-		addFilter("Other: Black Tumblestone", "cobblemon:black_tumblestone");
+		// Others Category
+		CheckboxSetting masterOther =
+			addMasterFilter("Drop All: Others", "others");
+		addFilter("Other: Tumblestone", "cobblemon:tumblestone", masterOther);
+		addFilter("Other: Sky Tumblestone", "cobblemon:sky_tumblestone",
+			masterOther);
+		addFilter("Other: Black Tumblestone", "cobblemon:black_tumblestone",
+			masterOther);
+		addFilter("Other: Cobblestone", "minecraft:cobblestone", masterOther);
+		addFilter("Mega: Blank stone", "mega_showdown:blank_mega_stone",
+			masterOther);
+		addFilter("Mega: Key stone", "mega_showdown:key_stone", masterOther);
+		addFilter("Mega: Z-Crystal", "mega_showdown:blank_z_crystal",
+			masterOther);
+		addFilter("Mega: Wishing star", "mega_showdown:wishing_star",
+			masterOther);
 	}
 	
-	private void addFilter(String name, String id)
+	private CheckboxSetting addMasterFilter(String name, String key)
+	{
+		CheckboxSetting master =
+			new CheckboxSetting(name, "Wipe entire category.", false);
+		masterFilters.put(key, master);
+		addSetting(master);
+		return master;
+	}
+	
+	private void addFilter(String name, String id, CheckboxSetting master)
 	{
 		CheckboxSetting setting = new CheckboxSetting(name,
 			"Automatically drop " + name + " after mining.", false);
 		filters.put(id, setting);
 		addSetting(setting);
+		
+		// Store master relation in the ID if needed, but here I'll use a prefix logic in the loop
+		// or better, a custom map for check.
 	}
 	
 	@Override
@@ -143,13 +203,31 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 	{
 		cooldown = 0;
 		wasInGame = false;
+		needsCleanup = false;
 		EVENTS.add(UpdateListener.class, this);
+		EVENTS.add(PacketInputListener.class, this);
 	}
 	
 	@Override
 	protected void onDisable()
 	{
 		EVENTS.remove(UpdateListener.class, this);
+		EVENTS.remove(PacketInputListener.class, this);
+	}
+	
+	@Override
+	public void onReceivedPacket(PacketInputEvent event)
+	{
+		if(!continuousDrop.isChecked())
+			return;
+		
+		if(event.getPacket() instanceof ClientboundTakeItemEntityPacket)
+			needsCleanup = true;
+		else if(event.getPacket() instanceof ClientboundContainerSetSlotPacket p)
+		{
+			if(p.getContainerId() == 0) // Player inventory
+				needsCleanup = true;
+		}
 	}
 	
 	@Override
@@ -158,13 +236,18 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 		Screen screen = MC.screen;
 		boolean isInGame = screen != null && isMinigameScreen(screen);
 		
-		// Handle screen state change
 		if(isInGame && !wasInGame)
 			takeInventorySnapshot();
 		else if(!isInGame && wasInGame)
-			dropUnwantedItems();
+			needsCleanup = true;
 		
 		wasInGame = isInGame;
+		
+		if(needsCleanup)
+		{
+			dropUnwantedItems();
+			needsCleanup = false;
+		}
 		
 		if(cooldown > 0)
 		{
@@ -191,8 +274,7 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 				initReflection(grid);
 			
 			int stability = stabilityRemainingField.getInt(grid);
-			if(stopAtStability.isChecked()
-				&& stability < minStability.getValue())
+			if(stopAtStability.isChecked() && stability < minStability.getValue())
 				return;
 			
 			if(stability <= 0)
@@ -274,7 +356,11 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 	
 	private void dropUnwantedItems()
 	{
-		Map<Item, Integer> currentInv = new HashMap<>();
+		long currentTime = System.currentTimeMillis();
+		if(currentTime - lastDropTime < 2000)
+			return;
+		
+		boolean dropped = false;
 		for(int i = 0; i < 36; i++)
 		{
 			ItemStack stack = MC.player.getInventory().getItem(i);
@@ -282,47 +368,68 @@ public final class AutoMiningHack extends Hack implements UpdateListener
 				continue;
 			
 			Item item = stack.getItem();
-			currentInv.put(item,
-				currentInv.getOrDefault(item, 0) + stack.getCount());
+			int currentCount = stack.getCount();
+			
+			// Only drop if it's unwanted AND (it was mined OR Always Drop is on)
+			if(isUnwanted(item))
+			{
+				if(continuousDrop.isChecked())
+					dropStack(i);
+				else
+				{
+					int oldCount = inventorySnapshot.getOrDefault(item, 0);
+					if(currentCount > oldCount)
+					{
+						dropStack(i);
+						dropped = true;
+					}
+				}
+			}
 		}
 		
-		for(Map.Entry<Item, Integer> entry : currentInv.entrySet())
-		{
-			Item item = entry.getKey();
-			int currentCount = entry.getValue();
-			int oldCount = inventorySnapshot.getOrDefault(item, 0);
-			
-			if(currentCount > oldCount)
-			{
-				String id = BuiltInRegistries.ITEM.getKey(item).toString();
-				CheckboxSetting filter = filters.get(id);
-				
-				if(filter != null && filter.isChecked())
-					dropAllStacksOf(item);
-			}
-		}
+		if(dropped)
+			lastDropTime = currentTime;
 	}
 	
-	private void dropAllStacksOf(Item item)
+	private boolean isUnwanted(Item item)
 	{
-		for(int i = 0; i < 36; i++)
+		String id = BuiltInRegistries.ITEM.getKey(item).toString();
+		
+		// Master category logic
+		if(id.contains("fossil") || id.contains("old_amber"))
 		{
-			ItemStack stack = MC.player.getInventory().getItem(i);
-			if(!stack.isEmpty() && stack.getItem() == item)
-			{
-				// Drop the stack
-				// Slot indices for handleInventoryMouseClick:
-				// 0-8 are crafting/armor, 9-35 are main inventory, 36-44 are
-				// hotbar
-				// Forge/Vanilla slot mapping context:
-				// In Wurst/Minecraft 1.21.1, index 'i' for
-				// player.getInventory().getItem(i)
-				// maps to different network slots.
-				int networkSlot = i < 9 ? i + 36 : i;
-				MC.gameMode.handleInventoryMouseClick(0, networkSlot, 1,
-					ClickType.THROW, MC.player);
-			}
+			if(masterFilters.get("fossils").isChecked())
+				return true;
 		}
+		
+		if(id.contains("_stone"))
+		{
+			if(masterFilters.get("stones").isChecked())
+				return true;
+		}
+		
+		if(id.contains("_gem"))
+		{
+			if(masterFilters.get("gems").isChecked())
+				return true;
+		}
+		else if(id.startsWith("mega_showdown:"))
+		{
+			if(id.contains("_tera_shard"))
+				if(masterFilters.get("tera").isChecked())
+					return true;
+		}
+		
+		// Specific filters logic
+		CheckboxSetting filter = filters.get(id);
+		return filter != null && filter.isChecked();
+	}
+	
+	private void dropStack(int slot)
+	{
+		int networkSlot = slot < 9 ? slot + 36 : slot;
+		MC.gameMode.handleInventoryMouseClick(0, networkSlot, 1, ClickType.THROW,
+			MC.player);
 	}
 	
 	private boolean tryHammer(Object grid, int x, int y, int[][] stone,
