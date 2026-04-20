@@ -10,15 +10,16 @@ package net.wurstclient.hacks;
 import java.lang.reflect.Method;
 import java.util.Collection;
 
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
+import net.wurstclient.WurstClient;
+import net.wurstclient.events.PreMotionListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.EnumSetting;
@@ -27,8 +28,9 @@ import net.wurstclient.settings.SliderSetting.ValueDisplay;
 import net.wurstclient.util.Rotation;
 import net.wurstclient.util.RotationUtils;
 
-@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "packet interact"})
-public final class CobbleMiningInteractHack extends Hack implements UpdateListener
+@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact"})
+public final class CobbleMiningInteractHack extends Hack
+	implements UpdateListener, PreMotionListener
 {
 	private final SliderSetting range = new SliderSetting("Range",
 		"Range to look for mining spots.", 5, 1, 10, 0.1, ValueDisplay.DECIMAL);
@@ -41,8 +43,15 @@ public final class CobbleMiningInteractHack extends Hack implements UpdateListen
 		"Speed of the camera rotation (for Smooth mode).", 20, 1, 90, 1,
 		ValueDisplay.INTEGER);
 	
+	private final SliderSetting exitDelay = new SliderSetting("Exit delay",
+		"Seconds to wait after finishing a mining game before opening a new one.",
+		2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL);
+	
 	private Method getSpotsMethod;
 	private int cooldown;
+	private long exitTimestamp;
+	private boolean wasInMinigame;
+	private BlockPos pendingSilentTarget;
 	
 	public CobbleMiningInteractHack()
 	{
@@ -51,24 +60,42 @@ public final class CobbleMiningInteractHack extends Hack implements UpdateListen
 		addSetting(range);
 		addSetting(mode);
 		addSetting(smoothSpeed);
+		addSetting(exitDelay);
 	}
 	
 	@Override
 	protected void onEnable()
 	{
 		cooldown = 0;
+		exitTimestamp = 0;
+		wasInMinigame = false;
+		pendingSilentTarget = null;
 		EVENTS.add(UpdateListener.class, this);
+		EVENTS.add(PreMotionListener.class, this);
 	}
 	
 	@Override
 	protected void onDisable()
 	{
 		EVENTS.remove(UpdateListener.class, this);
+		EVENTS.remove(PreMotionListener.class, this);
 	}
 	
 	@Override
 	public void onUpdate()
 	{
+		Screen screen = MC.screen;
+		boolean isInMinigame = screen != null && isMinigameScreen(screen);
+		
+		if(wasInMinigame && !isInMinigame)
+			exitTimestamp = System.currentTimeMillis();
+		
+		wasInMinigame = isInMinigame;
+		
+		if(System.currentTimeMillis() - exitTimestamp < exitDelay.getValue()
+			* 1000)
+			return;
+		
 		if(cooldown > 0)
 		{
 			cooldown--;
@@ -123,7 +150,6 @@ public final class CobbleMiningInteractHack extends Hack implements UpdateListen
 		switch(mode.getSelected())
 		{
 			case SNAP:
-				// Original mechanism: instant snap + interact in same tick
 				MC.player.setYRot(needed.yaw());
 				MC.player.setXRot(needed.pitch());
 				executeInteract(pos);
@@ -145,11 +171,23 @@ public final class CobbleMiningInteractHack extends Hack implements UpdateListen
 				}
 				break;
 				
-			case PACKET:
-				executePacketInteract(pos);
-				cooldown = 10;
+			case SILENT:
+				WurstClient.INSTANCE.getRotationFaker().faceVectorPacket(hitVec);
+				pendingSilentTarget = pos;
+				// Interaction happens in onPreMotion
 				break;
 		}
+	}
+	
+	@Override
+	public void onPreMotion()
+	{
+		if(pendingSilentTarget == null)
+			return;
+		
+		executeInteract(pendingSilentTarget);
+		pendingSilentTarget = null;
+		cooldown = 10;
 	}
 	
 	private void executeInteract(BlockPos pos)
@@ -162,31 +200,16 @@ public final class CobbleMiningInteractHack extends Hack implements UpdateListen
 		MC.player.swing(InteractionHand.MAIN_HAND);
 	}
 	
-	private void executePacketInteract(BlockPos pos)
+	private boolean isMinigameScreen(Screen screen)
 	{
-		Vec3 hitVec = Vec3.atCenterOf(pos);
-		Rotation needed = RotationUtils.getNeededRotations(hitVec);
-		
-		MC.getConnection().send(new ServerboundMovePlayerPacket.Rot(needed.yaw(),
-			needed.pitch(), MC.player.onGround()));
-		
-		BlockHitResult hitResult =
-			new BlockHitResult(hitVec, Direction.UP, pos, false);
-		MC.getConnection().send(new ServerboundUseItemOnPacket(
-			InteractionHand.MAIN_HAND, hitResult, 0));
-		
-		MC.player.swing(InteractionHand.MAIN_HAND);
-		
-		MC.getConnection()
-			.send(new ServerboundMovePlayerPacket.Rot(MC.player.getYRot(),
-				MC.player.getXRot(), MC.player.onGround()));
+		return screen.getClass().getName().contains("MiningMinigameScreen");
 	}
 	
 	private enum Mode
 	{
 		SNAP("Snap (Original)"),
 		SMOOTH("Smooth"),
-		PACKET("Packet (Silent)");
+		SILENT("Silent (Stealth)");
 		
 		private final String name;
 		
