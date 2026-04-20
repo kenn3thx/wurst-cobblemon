@@ -9,6 +9,7 @@ package net.wurstclient.hacks;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -83,6 +84,8 @@ public final class AutoMiningHack extends Hack
 	private Field treasureYField;
 	private Field treasureWidthField;
 	private Field treasureHeightField;
+	private Field treasureItemField;
+	private Field treasureRarityField;
 	
 	private Object toolPickaxe;
 	private Object toolHammer;
@@ -280,11 +283,31 @@ public final class AutoMiningHack extends Hack
 			if(stability <= 0)
 				return;
 			
-			List<?> treasures = (List<?>)treasuresField.get(grid);
+			List<Object> treasures =
+				new ArrayList<>((List<?>)treasuresField.get(grid));
 			Set<?> collected = (Set<?>)collectedTreasuresField.get(grid);
 			
-			if(treasures == null)
+			if(treasures == null || treasures.isEmpty())
 				return;
+			
+			// Sort treasures by priority
+			treasures.sort((t1, t2) -> {
+				int p1 = getPriorityRank(t1);
+				int p2 = getPriorityRank(t2);
+				if(p1 != p2)
+					return Integer.compare(p1, p2); // Lower rank = higher priority
+				
+				// Same rank, compare rarity (Higher = better)
+				try
+				{
+					int r1 = treasureRarityField.getInt(t1);
+					int r2 = treasureRarityField.getInt(t2);
+					return Integer.compare(r2, r1);
+				}catch(Exception e)
+				{
+					return 0;
+				}
+			});
 			
 			int[][] stoneHealth = (int[][])stoneHealthField.get(grid);
 			int[][] dirtHealth = (int[][])dirtHealthField.get(grid);
@@ -389,6 +412,33 @@ public final class AutoMiningHack extends Hack
 		
 		if(dropped)
 			lastDropTime = currentTime;
+	}
+	
+	private int getPriorityRank(Object treasure)
+	{
+		try
+		{
+			if(treasureItemField == null)
+				initTreasureReflection(treasure);
+			
+			Item item = (Item)treasureItemField.get(treasure);
+			String id = BuiltInRegistries.ITEM.getKey(item).toString();
+			
+			// Group 1: Unknown items (not in our filter map)
+			if(!filters.containsKey(id))
+				return 0;
+			
+			// Group 2: Known good items
+			if(!isUnwanted(item))
+				return 1;
+			
+			// Group 3: Known trash
+			return 2;
+			
+		}catch(Exception e)
+		{
+			return 1;
+		}
 	}
 	
 	private boolean isUnwanted(Item item)
@@ -498,6 +548,10 @@ public final class AutoMiningHack extends Hack
 		treasureWidthField.setAccessible(true);
 		treasureHeightField = tc.getDeclaredField("height");
 		treasureHeightField.setAccessible(true);
+		treasureItemField = tc.getDeclaredField("item");
+		treasureItemField.setAccessible(true);
+		treasureRarityField = tc.getDeclaredField("rarity");
+		treasureRarityField.setAccessible(true);
 	}
 	
 	private boolean isMinigameScreen(Screen screen)
