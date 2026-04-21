@@ -67,6 +67,8 @@
   "description.wurst.setting.cobblemininginteract.mode": "Mechanism to use for interaction (Snap, Smooth, or Silent).",
   "description.wurst.setting.cobblemininginteract.smooth_speed": "Speed of camera rotation (used in Smooth mode).",
   "description.wurst.setting.cobblemininginteract.exit_delay": "Wait time in seconds after closing a mining game before openning the next one.",
+  "description.wurst.setting.cobblemininginteract.auto_confirm": "Automatically clicks 'Yes' when the confirmation dialogue appears.",
+  "description.wurst.setting.cobblemininginteract.confirm_delay": "Wait time in seconds before automatically clicking 'Yes'.",
   "description.wurst.hack.cobbleminingesp": "Highlights sparkle spots from the 'Underground Mining Minigame' mod.",
   "description.wurst.hack.cobblelootesp": "Highlights mining ores and Pokeballs from CobbleLoots.",
   "description.wurst.hack.cobblemonhunter": "Automatically hunts down specific Pokemon across the map.",

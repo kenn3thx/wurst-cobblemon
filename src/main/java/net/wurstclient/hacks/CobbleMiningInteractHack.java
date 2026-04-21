@@ -9,7 +9,11 @@ package net.wurstclient.hacks;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.List;
 
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,13 +26,14 @@ import net.wurstclient.WurstClient;
 import net.wurstclient.events.PreMotionListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
+import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.EnumSetting;
 import net.wurstclient.settings.SliderSetting;
 import net.wurstclient.settings.SliderSetting.ValueDisplay;
 import net.wurstclient.util.Rotation;
 import net.wurstclient.util.RotationUtils;
 
-@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact"})
+@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact", "auto confirm"})
 public final class CobbleMiningInteractHack extends Hack
 	implements UpdateListener, PreMotionListener
 {
@@ -47,11 +52,22 @@ public final class CobbleMiningInteractHack extends Hack
 		"Seconds to wait after finishing a mining game before opening a new one.",
 		2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL);
 	
+	private final CheckboxSetting autoConfirm = new CheckboxSetting("Auto-confirm",
+		"Automatically clicks 'Yes' when the confirmation dialogue appears.",
+		true);
+	
+	private final SliderSetting confirmDelay = new SliderSetting("Confirm delay",
+		"Seconds to wait before auto-confirming.", 0.5, 0.0, 5.0, 0.1,
+		ValueDisplay.DECIMAL);
+	
 	private Method getSpotsMethod;
 	private int cooldown;
 	private long exitTimestamp;
 	private boolean wasInMinigame;
 	private BlockPos pendingSilentTarget;
+	
+	private Screen lastDialogScreen;
+	private long dialogOpenTime;
 	
 	public CobbleMiningInteractHack()
 	{
@@ -61,6 +77,8 @@ public final class CobbleMiningInteractHack extends Hack
 		addSetting(mode);
 		addSetting(smoothSpeed);
 		addSetting(exitDelay);
+		addSetting(autoConfirm);
+		addSetting(confirmDelay);
 	}
 	
 	@Override
@@ -70,6 +88,7 @@ public final class CobbleMiningInteractHack extends Hack
 		exitTimestamp = 0;
 		wasInMinigame = false;
 		pendingSilentTarget = null;
+		lastDialogScreen = null;
 		EVENTS.add(UpdateListener.class, this);
 		EVENTS.add(PreMotionListener.class, this);
 	}
@@ -85,8 +104,29 @@ public final class CobbleMiningInteractHack extends Hack
 	public void onUpdate()
 	{
 		Screen screen = MC.screen;
-		boolean isInMinigame = screen != null && isMinigameScreen(screen);
 		
+		// Handle DigDialogScreen automation
+		if(autoConfirm.isChecked() && screen != null
+			&& screen.getClass().getName().contains("DigDialogScreen"))
+		{
+			if(screen != lastDialogScreen)
+			{
+				lastDialogScreen = screen;
+				dialogOpenTime = System.currentTimeMillis();
+			}
+			
+			if(System.currentTimeMillis() - dialogOpenTime >= confirmDelay
+				.getValue() * 1000)
+			{
+				confirmDig(screen);
+				lastDialogScreen = null; // Prevent double trigger
+			}
+		}
+		else
+			lastDialogScreen = null;
+		
+		// Handle MiningMinigameScreen transitions
+		boolean isInMinigame = screen != null && isMinigameScreen(screen);
 		if(wasInMinigame && !isInMinigame)
 			exitTimestamp = System.currentTimeMillis();
 		
@@ -174,7 +214,6 @@ public final class CobbleMiningInteractHack extends Hack
 			case SILENT:
 				WurstClient.INSTANCE.getRotationFaker().faceVectorPacket(hitVec);
 				pendingSilentTarget = pos;
-				// Interaction happens in onPreMotion
 				break;
 		}
 	}
@@ -198,6 +237,36 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hitResult);
 		MC.player.swing(InteractionHand.MAIN_HAND);
+	}
+	
+	private void confirmDig(Screen screen)
+	{
+		// Find the second Button among children
+		int buttonCount = 0;
+		for(GuiEventListener child : screen.children())
+		{
+			if(child instanceof Button button)
+			{
+				buttonCount++;
+				if(buttonCount == 2) // Based on bytecode analysis, the 2nd button is "Yes"
+				{
+					button.onPress();
+					return;
+				}
+			}
+			else if(child instanceof AbstractWidget widget
+				&& widget.getClass().getName().endsWith("$1"))
+			{
+				// Fallback for some mods that use anonymous classes for buttons
+				buttonCount++;
+				if(buttonCount == 2)
+				{
+					if(widget instanceof Button b)
+						b.onPress();
+					return;
+				}
+			}
+		}
 	}
 	
 	private boolean isMinigameScreen(Screen screen)
