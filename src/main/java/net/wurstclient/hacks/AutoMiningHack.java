@@ -135,7 +135,7 @@ public final class AutoMiningHack extends Hack
 			addMasterFilter("Drop All: Stones", "stones");
 		String[] stones = {"thunder_stone", "leaf_stone", "moon_stone",
 			"sun_stone", "shiny_stone", "dusk_stone", "dawn_stone", "fire_stone",
-			"water_stone", "everstone"};
+			"water_stone", "ice_stone", "everstone"};
 		for(String s : stones)
 		{
 			String name = s.replace("_", " ");
@@ -179,6 +179,18 @@ public final class AutoMiningHack extends Hack
 			masterOther);
 		addFilter("Mega: Wishing star", "mega_showdown:wishing_star",
 			masterOther);
+		addFilter("Other: Amethyst Shard", "minecraft:amethyst_shard",
+			masterOther);
+		
+		// Smithing Category
+		CheckboxSetting masterSmith =
+			addMasterFilter("Drop All: Smithing", "smithing");
+		addFilter("Smith: Netherite Upgrade",
+			"minecraft:netherite_upgrade_smithing_template", masterSmith);
+		addFilter("Smith: Sentry Trim",
+			"minecraft:sentry_armor_trim_smithing_template", masterSmith);
+		addFilter("Smith: Vex Trim",
+			"minecraft:vex_armor_trim_smithing_template", masterSmith);
 	}
 	
 	private CheckboxSetting addMasterFilter(String name, String key)
@@ -468,6 +480,11 @@ public final class AutoMiningHack extends Hack
 			if(id.contains("_tera_shard"))
 				if(masterFilters.get("tera").isChecked())
 					return true;
+		}
+		else if(id.endsWith("_smithing_template"))
+		{
+			if(masterFilters.get("smithing").isChecked())
+				return true;
 		}
 		
 		// Specific filters logic
