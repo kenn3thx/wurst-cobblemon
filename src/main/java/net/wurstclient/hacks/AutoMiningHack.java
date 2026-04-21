@@ -86,7 +86,7 @@ public final class AutoMiningHack extends Hack
 	private boolean needsCleanup;
 	
 	private int cooldown;
-	private int pendingDropSlot = -1;
+	private final List<Integer> pendingDrops = new ArrayList<>();
 	private Rotation safeDropRotation;
 	
 	private Field gridField;
@@ -417,6 +417,9 @@ public final class AutoMiningHack extends Hack
 		if(currentTime - lastDropTime < dropDelay.getValue() * 1000)
 			return;
 		
+		if(!pendingDrops.isEmpty())
+			return;
+
 		for(int i = 0; i < 36; i++)
 		{
 			ItemStack stack = MC.player.getInventory().getItem(i);
@@ -426,49 +429,43 @@ public final class AutoMiningHack extends Hack
 			Item item = stack.getItem();
 			int currentCount = stack.getCount();
 			
-			// Only drop if it's unwanted AND (it was mined OR Always Drop is on)
 			if(isUnwanted(item))
 			{
 				if(continuousDrop.isChecked())
-				{
-					prepareDrop(i);
-					return;
-				}
+					pendingDrops.add(i);
 				else
 				{
 					int oldCount = inventorySnapshot.getOrDefault(item, 0);
 					if(currentCount > oldCount)
-					{
-						prepareDrop(i);
-						return;
-					}
+						pendingDrops.add(i);
 				}
 			}
 		}
-	}
-	
-	private void prepareDrop(int slot)
-	{
-		pendingDropSlot = slot;
-		if(stealthDropper.isChecked())
-			safeDropRotation = findSafeDropRotation();
-		else
-			safeDropRotation = null;
+		
+		if(!pendingDrops.isEmpty())
+		{
+			if(stealthDropper.isChecked())
+				safeDropRotation = findSafeDropRotation();
+			else
+				safeDropRotation = null;
+		}
 	}
 	
 	@Override
 	public void onPreMotion()
 	{
-		if(pendingDropSlot == -1)
+		if(pendingDrops.isEmpty())
 			return;
 		
 		if(stealthDropper.isChecked() && safeDropRotation != null)
 			WURST.getRotationFaker().faceVectorPacket(
 				RotationUtils.getEyesPos().add(safeDropRotation.toLookVec().scale(5)));
 		
-		dropStack(pendingDropSlot);
+		for(int slot : pendingDrops)
+			dropStack(slot);
+		
 		lastDropTime = System.currentTimeMillis();
-		pendingDropSlot = -1;
+		pendingDrops.clear();
 		safeDropRotation = null;
 	}
 	
