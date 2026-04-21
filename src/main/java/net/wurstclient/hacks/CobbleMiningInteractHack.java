@@ -132,7 +132,7 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		wasInMinigame = isInMinigame;
 		
-		if(System.currentTimeMillis() - exitTimestamp < exitDelay.getValue()
+		if(screen != null || System.currentTimeMillis() - exitTimestamp < exitDelay.getValue()
 			* 1000)
 			return;
 		
