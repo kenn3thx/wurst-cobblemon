@@ -28,15 +28,23 @@ import net.minecraft.world.item.Items;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
 import net.wurstclient.events.PacketInputListener;
+import net.wurstclient.events.PreMotionListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.SliderSetting;
 import net.wurstclient.settings.SliderSetting.ValueDisplay;
+import net.wurstclient.util.Rotation;
+import net.wurstclient.util.RotationUtils;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.core.Direction;
 
 @SearchTags({"auto mining", "mining minigame bot", "fossil miner", "item filter", "stealth dropper"})
 public final class AutoMiningHack extends Hack
-	implements UpdateListener, PacketInputListener
+	implements UpdateListener, PacketInputListener, PreMotionListener
 {
 	private final SliderSetting delay = new SliderSetting("Delay",
 		"Ticks between each hit.", 2, 1, 20, 1, ValueDisplay.INTEGER);
@@ -60,6 +68,15 @@ public final class AutoMiningHack extends Hack
 		"Continuous Drop",
 		"Automatically drops unwanted items whenever they are picked up.", true);
 	
+	private final SliderSetting dropDelay = new SliderSetting("Drop Delay",
+		"Seconds to wait between dropping items.", 3.0, 0.5, 10.0, 0.5,
+		ValueDisplay.DECIMAL);
+	
+	private final CheckboxSetting stealthDropper = new CheckboxSetting(
+		"Stealth Dropper",
+		"Tosses items into open space using silent rotations to avoid re-pickup.",
+		true);
+	
 	private long lastDropTime;
 	private final Map<String, CheckboxSetting> masterFilters =
 		new LinkedHashMap<>();
@@ -69,6 +86,8 @@ public final class AutoMiningHack extends Hack
 	private boolean needsCleanup;
 	
 	private int cooldown;
+	private int pendingDropSlot = -1;
+	private Rotation safeDropRotation;
 	
 	private Field gridField;
 	private Field treasuresField;
@@ -100,6 +119,8 @@ public final class AutoMiningHack extends Hack
 		addSetting(autoHammer);
 		addSetting(avoidBedrock);
 		addSetting(continuousDrop);
+		addSetting(dropDelay);
+		addSetting(stealthDropper);
 		
 		initFilters();
 	}
@@ -221,6 +242,7 @@ public final class AutoMiningHack extends Hack
 		needsCleanup = false;
 		EVENTS.add(UpdateListener.class, this);
 		EVENTS.add(PacketInputListener.class, this);
+		EVENTS.add(PreMotionListener.class, this);
 	}
 	
 	@Override
@@ -228,6 +250,7 @@ public final class AutoMiningHack extends Hack
 	{
 		EVENTS.remove(UpdateListener.class, this);
 		EVENTS.remove(PacketInputListener.class, this);
+		EVENTS.remove(PreMotionListener.class, this);
 	}
 	
 	@Override
@@ -388,14 +411,12 @@ public final class AutoMiningHack extends Hack
 				inventorySnapshot.getOrDefault(item, 0) + stack.getCount());
 		}
 	}
-	
-	private void dropUnwantedItems()
+		private void dropUnwantedItems()
 	{
 		long currentTime = System.currentTimeMillis();
-		if(currentTime - lastDropTime < 2000)
+		if(currentTime - lastDropTime < dropDelay.getValue() * 1000)
 			return;
 		
-		boolean dropped = false;
 		for(int i = 0; i < 36; i++)
 		{
 			ItemStack stack = MC.player.getInventory().getItem(i);
@@ -409,21 +430,83 @@ public final class AutoMiningHack extends Hack
 			if(isUnwanted(item))
 			{
 				if(continuousDrop.isChecked())
-					dropStack(i);
+				{
+					prepareDrop(i);
+					return;
+				}
 				else
 				{
 					int oldCount = inventorySnapshot.getOrDefault(item, 0);
 					if(currentCount > oldCount)
 					{
-						dropStack(i);
-						dropped = true;
+						prepareDrop(i);
+						return;
 					}
 				}
 			}
 		}
+	}
+	
+	private void prepareDrop(int slot)
+	{
+		pendingDropSlot = slot;
+		if(stealthDropper.isChecked())
+			safeDropRotation = findSafeDropRotation();
+		else
+			safeDropRotation = null;
+	}
+	
+	@Override
+	public void onPreMotion()
+	{
+		if(pendingDropSlot == -1)
+			return;
 		
-		if(dropped)
-			lastDropTime = currentTime;
+		if(stealthDropper.isChecked() && safeDropRotation != null)
+			WURST.getRotationFaker().faceVectorPacket(
+				RotationUtils.getEyesPos().add(safeDropRotation.toLookVec().scale(5)));
+		
+		dropStack(pendingDropSlot);
+		lastDropTime = System.currentTimeMillis();
+		pendingDropSlot = -1;
+		safeDropRotation = null;
+	}
+	
+	private Rotation findSafeDropRotation()
+	{
+		float yaw = MC.player.getYRot();
+		
+		// Directions to check: UP, BACK, UP-BACK, LEFT, RIGHT
+		float[] yaws = {yaw, yaw + 180, yaw + 180, yaw + 90, yaw - 90};
+		float[] pitches = {-90, 0, -45, 0, 0};
+		
+		Rotation bestRotation = new Rotation(yaw, -90); // Default UP
+		double maxDist = 0;
+		
+		Vec3 start = RotationUtils.getEyesPos();
+		
+		for(int i = 0; i < yaws.length; i++)
+		{
+			Rotation rot = Rotation.wrapped(yaws[i], pitches[i]);
+			Vec3 end = start.add(rot.toLookVec().scale(8));
+			
+			BlockHitResult hit = MC.level.clip(new ClipContext(start, end,
+				ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, MC.player));
+			
+			double dist = hit.getType() == HitResult.Type.MISS ? 8
+				: hit.getLocation().distanceTo(start);
+			
+			if(dist > maxDist)
+			{
+				maxDist = dist;
+				bestRotation = rot;
+			}
+			
+			if(maxDist >= 8)
+				break;
+		}
+		
+		return bestRotation;
 	}
 	
 	private int getPriorityRank(Object treasure)
