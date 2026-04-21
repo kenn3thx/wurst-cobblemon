@@ -33,7 +33,7 @@ import net.wurstclient.settings.SliderSetting.ValueDisplay;
 import net.wurstclient.util.Rotation;
 import net.wurstclient.util.RotationUtils;
 
-@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact", "auto confirm"})
+@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact", "auto confirm", "auto move"})
 public final class CobbleMiningInteractHack extends Hack
 	implements UpdateListener, PreMotionListener
 {
@@ -45,7 +45,7 @@ public final class CobbleMiningInteractHack extends Hack
 		Mode.SNAP);
 	
 	private final SliderSetting smoothSpeed = new SliderSetting("Smooth speed",
-		"Speed of the camera rotation (for Smooth mode).", 20, 1, 90, 1,
+		"Speed of the camera rotation (for Smooth/Move modes).", 45, 1, 180, 1,
 		ValueDisplay.INTEGER);
 	
 	private final SliderSetting exitDelay = new SliderSetting("Exit delay",
@@ -60,6 +60,13 @@ public final class CobbleMiningInteractHack extends Hack
 		"Seconds to wait before auto-confirming.", 0.5, 0.0, 5.0, 0.1,
 		ValueDisplay.DECIMAL);
 	
+	private final CheckboxSetting autoMove = new CheckboxSetting("Auto-move",
+		"Automatically walks toward the closest mining spot.", false);
+	
+	private final SliderSetting moveRange = new SliderSetting("Move range",
+		"Maximum distance to look for mining spots to walk to.", 20, 5, 50, 1,
+		ValueDisplay.INTEGER);
+	
 	private Method getSpotsMethod;
 	private int cooldown;
 	private long exitTimestamp;
@@ -68,6 +75,8 @@ public final class CobbleMiningInteractHack extends Hack
 	
 	private Screen lastDialogScreen;
 	private long dialogOpenTime;
+	
+	private boolean wasMoveFollowing;
 	
 	public CobbleMiningInteractHack()
 	{
@@ -79,6 +88,8 @@ public final class CobbleMiningInteractHack extends Hack
 		addSetting(exitDelay);
 		addSetting(autoConfirm);
 		addSetting(confirmDelay);
+		addSetting(autoMove);
+		addSetting(moveRange);
 	}
 	
 	@Override
@@ -89,6 +100,7 @@ public final class CobbleMiningInteractHack extends Hack
 		wasInMinigame = false;
 		pendingSilentTarget = null;
 		lastDialogScreen = null;
+		wasMoveFollowing = false;
 		EVENTS.add(UpdateListener.class, this);
 		EVENTS.add(PreMotionListener.class, this);
 	}
@@ -98,6 +110,7 @@ public final class CobbleMiningInteractHack extends Hack
 	{
 		EVENTS.remove(UpdateListener.class, this);
 		EVENTS.remove(PreMotionListener.class, this);
+		stopFollowing();
 	}
 	
 	@Override
@@ -134,10 +147,16 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		if(screen != null || System.currentTimeMillis() - exitTimestamp < exitDelay.getValue()
 			* 1000)
+		{
+			if(wasMoveFollowing)
+				stopFollowing();
 			return;
+		}
 		
 		if(cooldown > 0)
 		{
+			if(wasMoveFollowing)
+				stopFollowing();
 			cooldown--;
 			return;
 		}
@@ -157,7 +176,11 @@ public final class CobbleMiningInteractHack extends Hack
 			Collection<BlockPos> spots =
 				(Collection<BlockPos>)getSpotsMethod.invoke(null);
 			if(spots == null || spots.isEmpty())
+			{
+				if(wasMoveFollowing)
+					stopFollowing();
 				return;
+			}
 			
 			BlockPos closest = null;
 			double closestDist = Double.MAX_VALUE;
@@ -165,7 +188,7 @@ public final class CobbleMiningInteractHack extends Hack
 			for(BlockPos pos : spots)
 			{
 				double dist = MC.player.distanceToSqr(Vec3.atCenterOf(pos));
-				double r = range.getValue();
+				double r = Math.max(range.getValue(), moveRange.getValue());
 				if(dist < closestDist && dist <= r * r)
 				{
 					closest = pos;
@@ -174,7 +197,29 @@ public final class CobbleMiningInteractHack extends Hack
 			}
 			
 			if(closest != null)
-				handleTarget(closest);
+			{
+				double dist = MC.player.distanceToSqr(Vec3.atCenterOf(closest));
+				double interactRange = range.getValue();
+				
+				if(dist <= interactRange * interactRange)
+				{
+					if(wasMoveFollowing)
+						stopFollowing();
+					handleTarget(closest);
+				}
+				else if(autoMove.isChecked())
+				{
+					double mRange = moveRange.getValue();
+					if(dist <= mRange * mRange)
+						goToMiningSpot(closest);
+					else if(wasMoveFollowing)
+						stopFollowing();
+				}
+				else if(wasMoveFollowing)
+					stopFollowing();
+			}
+			else if(wasMoveFollowing)
+				stopFollowing();
 			
 		}catch(Exception e)
 		{
@@ -239,6 +284,48 @@ public final class CobbleMiningInteractHack extends Hack
 		MC.player.swing(InteractionHand.MAIN_HAND);
 	}
 	
+	private void goToMiningSpot(BlockPos pos)
+	{
+		Vec3 hitVec = Vec3.atCenterOf(pos);
+		Rotation needed = RotationUtils.getNeededRotations(hitVec);
+		
+		// Smoothly turn towards target
+		Rotation next = RotationUtils.slowlyTurnTowards(needed,
+			(float)smoothSpeed.getValue());
+		MC.player.setYRot(next.yaw());
+		// Adjusting pitch is optional for movement but looks better
+		MC.player.setXRot(next.pitch());
+		
+		// Move forward if mostly facing the target
+		float yawDiff = Math.abs(prevRotationDiff(MC.player.getYRot(), needed.yaw()));
+		if(yawDiff < 45)
+		{
+			MC.options.keyUp.setDown(true);
+			MC.player.setSprinting(true);
+			wasMoveFollowing = true;
+		}
+		else
+			MC.options.keyUp.setDown(false);
+		
+		// Auto jump if stuck
+		if(MC.player.horizontalCollision && MC.player.onGround())
+			MC.player.jumpFromGround();
+	}
+	
+	private float prevRotationDiff(float cur, float target)
+	{
+		float diff = target - cur;
+		while(diff <= -180) diff += 360;
+		while(diff > 180) diff -= 360;
+		return diff;
+	}
+	
+	private void stopFollowing()
+	{
+		MC.options.keyUp.setDown(false);
+		wasMoveFollowing = false;
+	}
+	
 	private void confirmDig(Screen screen)
 	{
 		// Find the second Button among children
@@ -250,6 +337,8 @@ public final class CobbleMiningInteractHack extends Hack
 				buttonCount++;
 				if(buttonCount == 2) // Based on bytecode analysis, the 2nd button is "Yes"
 				{
+					if(wasMoveFollowing)
+						stopFollowing();
 					button.onPress();
 					return;
 				}
@@ -262,7 +351,11 @@ public final class CobbleMiningInteractHack extends Hack
 				if(buttonCount == 2)
 				{
 					if(widget instanceof Button b)
+					{
+						if(wasMoveFollowing)
+							stopFollowing();
 						b.onPress();
+					}
 					return;
 				}
 			}
