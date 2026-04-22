@@ -88,4 +88,9 @@ public final class RotationFaker
 	{
 		return fakeRotation ? serverPitch : WurstClient.MC.player.getXRot();
 	}
+	
+	public boolean isFakeRotation()
+	{
+		return fakeRotation;
+	}
 }
