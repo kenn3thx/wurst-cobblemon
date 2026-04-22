@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.client.gui.screens.Screen;
@@ -77,6 +78,17 @@ public final class AutoMiningHack extends Hack
 		"Tosses items into open space using silent rotations to avoid re-pickup.",
 		true);
 		
+	private final CheckboxSetting enableAutoDrop = new CheckboxSetting(
+		"Enable Auto Drop", "Master toggle for item cleanup.", true);
+		
+	private final SliderSetting minItemsToDrop = new SliderSetting("Min Items to Drop",
+		"Minimum amount of trash needed to trigger a social cleanup session.", 5, 1, 15, 1,
+		ValueDisplay.INTEGER);
+		
+	private final SliderSetting maxReactDelay = new SliderSetting("Max React Delay",
+		"Random delay before responding to items picked up from the ground.", 30.0, 0.0, 60.0, 1.0,
+		ValueDisplay.DECIMAL);
+		
 	private final SliderSetting itemInterval = new SliderSetting("Item Interval",
 		"Delay between dropping individual items in seconds.", 0.3, 0.1, 2.0, 0.1,
 		ValueDisplay.DECIMAL);
@@ -92,6 +104,9 @@ public final class AutoMiningHack extends Hack
 	private final Map<Item, Integer> inventorySnapshot = new HashMap<>();
 	private boolean wasInGame;
 	private boolean needsCleanup;
+	private boolean urgentCleanup;
+	private long plannedCleanupTime;
+	private final Random random = new Random();
 	
 	private int cooldown;
 	
@@ -136,6 +151,9 @@ public final class AutoMiningHack extends Hack
 		addSetting(continuousDrop);
 		addSetting(dropDelay);
 		addSetting(stealthDropper);
+		addSetting(enableAutoDrop);
+		addSetting(minItemsToDrop);
+		addSetting(maxReactDelay);
 		addSetting(itemInterval);
 		addSetting(turnSpeed);
 		
@@ -257,6 +275,8 @@ public final class AutoMiningHack extends Hack
 		cooldown = 0;
 		wasInGame = false;
 		needsCleanup = false;
+		urgentCleanup = false;
+		plannedCleanupTime = 0;
 		dropPhase = DropPhase.IDLE;
 		dropQueue.clear();
 		EVENTS.add(UpdateListener.class, this);
@@ -275,19 +295,17 @@ public final class AutoMiningHack extends Hack
 	@Override
 	public void onReceivedPacket(PacketInputEvent event)
 	{
-		if(!continuousDrop.isChecked())
+		if(!enableAutoDrop.isChecked() || !continuousDrop.isChecked())
 			return;
 		
-		if(event.getPacket() instanceof ClientboundTakeItemEntityPacket)
+		if(event.getPacket() instanceof ClientboundTakeItemEntityPacket || 
+		  (event.getPacket() instanceof ClientboundContainerSetSlotPacket p && p.getContainerId() == 0))
 		{
-			// Reset debounce ONLY if items are cleared
-			if(dropPhase == DropPhase.IDLE)
-				needsCleanup = true;
-		}
-		else if(event.getPacket() instanceof ClientboundContainerSetSlotPacket p)
-		{
-			if(p.getContainerId() == 0 && dropPhase == DropPhase.IDLE)
-				needsCleanup = true;
+			if(dropPhase == DropPhase.IDLE && plannedCleanupTime == 0)
+			{
+				long delay = (long)(random.nextDouble() * maxReactDelay.getValue() * 1000);
+				plannedCleanupTime = System.currentTimeMillis() + delay;
+			}
 		}
 	}
 	
@@ -300,15 +318,21 @@ public final class AutoMiningHack extends Hack
 		if(isInGame && !wasInGame)
 			takeInventorySnapshot();
 		else if(!isInGame && wasInGame)
-			needsCleanup = true;
+			urgentCleanup = true;
 		
 		wasInGame = isInGame;
 		
-		if(needsCleanup)
+		if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
 		{
-			if(dropPhase == DropPhase.IDLE)
+			long now = System.currentTimeMillis();
+			boolean timeToCleanup = plannedCleanupTime > 0 && now >= plannedCleanupTime;
+			
+			if(urgentCleanup || (timeToCleanup && countUnwantedItems() >= (int)minItemsToDrop.getValue()))
+			{
 				dropUnwantedItems();
-			needsCleanup = false;
+				urgentCleanup = false;
+				plannedCleanupTime = 0;
+			}
 		}
 		
 		if(cooldown > 0)
@@ -622,6 +646,9 @@ public final class AutoMiningHack extends Hack
 	
 	private boolean isUnwanted(Item item)
 	{
+		if(!enableAutoDrop.isChecked())
+			return false;
+			
 		String id = BuiltInRegistries.ITEM.getKey(item).toString();
 		
 		// Master category logic
@@ -657,6 +684,30 @@ public final class AutoMiningHack extends Hack
 		// Specific filters logic
 		CheckboxSetting filter = filters.get(id);
 		return filter != null && filter.isChecked();
+	}
+	
+	private int countUnwantedItems()
+	{
+		int count = 0;
+		for(int i = 0; i < 36; i++)
+		{
+			ItemStack stack = MC.player.getInventory().getItem(i);
+			if(stack.isEmpty())
+				continue;
+			
+			if(isUnwanted(stack.getItem()))
+			{
+				if(continuousDrop.isChecked())
+					count++;
+				else
+				{
+					int oldCount = inventorySnapshot.getOrDefault(stack.getItem(), 0);
+					if(stack.getCount() > oldCount)
+						count++;
+				}
+			}
+		}
+		return count;
 	}
 	
 	private void dropStack(int slot)

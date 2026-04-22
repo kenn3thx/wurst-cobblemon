@@ -26,6 +26,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
@@ -80,6 +81,9 @@ public final class CobbleMiningInteractHack extends Hack
 	
 	private final CheckboxSetting socialInteraction = new CheckboxSetting("Social Interaction",
 		"Looks at nearby players and sneaks.", true);
+		
+	private final CheckboxSetting avoidItems = new CheckboxSetting("Avoid Items",
+		"Avoid standing on or walking near dropped items on the ground.", true);
 	
 	private final SliderSetting humanJitter = new SliderSetting("Human Jitter",
 		"Intensity of camera vibration.", 0.5, 0.0, 2.0, 0.1, ValueDisplay.DECIMAL);
@@ -124,6 +128,7 @@ public final class CobbleMiningInteractHack extends Hack
 		addSetting(moveRange);
 		addSetting(ghostAi);
 		addSetting(socialInteraction);
+		addSetting(avoidItems);
 		addSetting(humanJitter);
 		addSetting(debugMode);
 	}
@@ -419,7 +424,19 @@ public final class CobbleMiningInteractHack extends Hack
 	
 	private boolean isValidStandingSpot(BlockPos pos)
 	{
-		return isPassable(pos) && isPassable(pos.above()) && isSolid(pos.below());
+		if(!isPassable(pos) || !isPassable(pos.above()) || !isSolid(pos.below()))
+			return false;
+			
+		if(avoidItems.isChecked())
+		{
+			// Check for items on or near the spot
+			List<ItemEntity> items = MC.level.getEntitiesOfClass(ItemEntity.class, 
+				new net.minecraft.world.phys.AABB(pos).inflate(0.5));
+			if(!items.isEmpty())
+				return false;
+		}
+		
+		return true;
 	}
 	
 	private boolean isPassable(BlockPos pos)
