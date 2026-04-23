@@ -104,6 +104,8 @@ public final class CobbleMiningInteractHack extends Hack
 	private PathProcessor pathProcessor;
 	private BlockPos currentTargetOre;
 	private BlockPos currentGoalStanding;
+	private long pathingStartTime;
+	private BlockPos lastResetPos;
 	
 	private enum SocialState { NONE, STARE, SNEAK, RESUME }
 	private SocialState socialState = SocialState.NONE;
@@ -148,6 +150,8 @@ public final class CobbleMiningInteractHack extends Hack
 		socialState = SocialState.NONE;
 		targetBlacklist.clear();
 		unreachableTargets.clear();
+		lastResetPos = null;
+		pathingStartTime = 0;
 		EVENTS.add(UpdateListener.class, this);
 		EVENTS.add(PreMotionListener.class, this);
 		EVENTS.add(RenderListener.class, this);
@@ -215,7 +219,15 @@ public final class CobbleMiningInteractHack extends Hack
 		// Map cleanup
 		long now = System.currentTimeMillis();
 		targetBlacklist.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
-		unreachableTargets.entrySet().removeIf(entry -> now - entry.getValue() > 30000); // 30s for failures
+		unreachableTargets.entrySet().removeIf(entry -> now - entry.getValue() > 30000); // 30s
+		
+		// Dynamic reset when moving
+		BlockPos currentPos = MC.player.blockPosition();
+		if(lastResetPos == null || lastResetPos.distManhattan(currentPos) > 2)
+		{
+			unreachableTargets.clear();
+			lastResetPos = currentPos;
+		}
 		
 		try
 		{
@@ -234,7 +246,20 @@ public final class CobbleMiningInteractHack extends Hack
 				return;
 			}
 			
-			// Filter and Sort spots by distance
+			// 1. Proximity Priority: Try to interact with ANY spot in range first (Bypasses movement logic)
+			double interactR = range.getValue();
+			for(BlockPos spot : spots)
+			{
+				if(targetBlacklist.containsKey(spot)) continue;
+				if(MC.player.distanceToSqr(Vec3.atCenterOf(spot)) <= interactR * interactR)
+				{
+					if(pathProcessor != null) stopMoving();
+					handleTarget(spot);
+					return; // Interacted!
+				}
+			}
+			
+			// 2. Movement Logic: Search for pathing targets
 			double moveR = moveRange.getValue();
 			List<BlockPos> validSpots = spots.stream()
 				.filter(pos -> !targetBlacklist.containsKey(pos))
@@ -253,7 +278,7 @@ public final class CobbleMiningInteractHack extends Hack
 			for(BlockPos target : validSpots)
 			{
 				double distRaw = MC.player.distanceToSqr(Vec3.atCenterOf(target));
-				double interactR = range.getValue();
+				interactR = range.getValue();
 				
 				if(distRaw <= interactR * interactR)
 				{
@@ -349,6 +374,7 @@ public final class CobbleMiningInteractHack extends Hack
 			currentTargetOre = orePos;
 			currentGoalStanding = standingSpot;
 			pathFinder = new PathFinder(currentGoalStanding);
+			pathingStartTime = System.currentTimeMillis();
 		}
 		
 		if(pathFinder != null)
@@ -366,7 +392,7 @@ public final class CobbleMiningInteractHack extends Hack
 				}
 			}
 			
-			if(pathFinder.isFailed())
+			if(pathFinder.isFailed() || (System.currentTimeMillis() - pathingStartTime > 5000))
 			{
 				stopMoving();
 				return false; // Try next ore
@@ -401,33 +427,12 @@ public final class CobbleMiningInteractHack extends Hack
 		}
 	}
 	
-	private BlockPos findStandingSpot(BlockPos orePos)
-	{
-		// Increased radius to 6x6x6 for better coverage in complex areas
-		for(int y = -4; y <= 6; y++)
-		{
-			for(int x = -6; x <= 6; x++)
-			{
-				for(int z = -6; z <= 6; z++)
-				{
-					BlockPos pos = orePos.offset(x, y, z);
-					if(isValidStandingSpot(pos))
-					{
-						if(orePos.distSqr(pos) <= range.getValue() * range.getValue())
-							return pos;
-					}
-				}
-			}
-		}
-		return null;
-	}
-	
-	private boolean isValidStandingSpot(BlockPos pos)
+	private boolean isValidStandingSpot(BlockPos pos, boolean checkItems)
 	{
 		if(!isPassable(pos) || !isPassable(pos.above()) || !isSolid(pos.below()))
 			return false;
 			
-		if(avoidItems.isChecked())
+		if(checkItems && avoidItems.isChecked())
 		{
 			// Check for items on or near the spot
 			List<ItemEntity> items = MC.level.getEntitiesOfClass(ItemEntity.class, 
@@ -437,6 +442,38 @@ public final class CobbleMiningInteractHack extends Hack
 		}
 		
 		return true;
+	}
+	
+	private BlockPos findStandingSpot(BlockPos orePos)
+	{
+		BlockPos spot = findSpotWithinRadius(orePos, true);
+		if(spot == null && avoidItems.isChecked())
+		{
+			// Fallback: search again ignoring items
+			spot = findSpotWithinRadius(orePos, false);
+		}
+		return spot;
+	}
+	
+	private BlockPos findSpotWithinRadius(BlockPos orePos, boolean checkItems)
+	{
+		// Increased radius to 6x6x6 for better coverage in complex areas
+		for(int y = -4; y <= 6; y++)
+		{
+			for(int x = -6; x <= 6; x++)
+			{
+				for(int z = -6; z <= 6; z++)
+				{
+					BlockPos pos = orePos.offset(x, y, z);
+					if(isValidStandingSpot(pos, checkItems))
+					{
+						if(orePos.distSqr(pos) <= range.getValue() * range.getValue())
+							return pos;
+					}
+				}
+			}
+		}
+		return null;
 	}
 	
 	private boolean isPassable(BlockPos pos)
