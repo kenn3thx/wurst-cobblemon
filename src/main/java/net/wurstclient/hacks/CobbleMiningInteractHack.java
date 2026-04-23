@@ -210,6 +210,14 @@ public final class CobbleMiningInteractHack extends Hack
 			return;
 		}
 		
+		// Pause movement during drop sessions to prevent pickup loops
+		AutoMiningHack amh = WurstClient.INSTANCE.getHax().autoMiningHack;
+		if(amh != null && amh.isEnabled() && amh.isDropping())
+		{
+			if(pathProcessor != null) stopMoving();
+			return;
+		}
+		
 		if(cooldown > 0)
 		{
 			cooldown--;
@@ -219,7 +227,7 @@ public final class CobbleMiningInteractHack extends Hack
 		// Map cleanup
 		long now = System.currentTimeMillis();
 		targetBlacklist.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
-		unreachableTargets.entrySet().removeIf(entry -> now - entry.getValue() > 30000); // 30s
+		unreachableTargets.entrySet().removeIf(entry -> now - entry.getValue() > 5000); // Reduced to 5s for social responsiveness
 		
 		// Dynamic reset when moving
 		BlockPos currentPos = MC.player.blockPosition();
@@ -401,6 +409,18 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		if(pathProcessor != null && !pathProcessor.isDone())
 		{
+			// Active avoidance: stop and repath if we dived into items
+			if(avoidItems.isChecked())
+			{
+				List<ItemEntity> nearbyItems = MC.level.getEntitiesOfClass(ItemEntity.class, 
+					MC.player.getBoundingBox().inflate(0.3));
+				if(!nearbyItems.isEmpty())
+				{
+					stopMoving(); 
+					return true;
+				}
+			}
+			
 			pathProcessor.process();
 			applyHumanJitter();
 			if(random.nextInt(100) < 2)

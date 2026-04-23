@@ -516,6 +516,11 @@ public final class AutoMiningHack extends Hack
 		}
 	}
 	
+	public boolean isDropping()
+	{
+		return dropPhase != DropPhase.IDLE;
+	}
+	
 	@Override
 	public void onPreMotion()
 	{
