@@ -45,7 +45,7 @@ import net.minecraft.core.Direction;
 
 @SearchTags({"auto mining", "mining minigame bot", "fossil miner", "item filter", "stealth dropper"})
 public final class AutoMiningHack extends Hack
-	implements UpdateListener, PacketInputListener, PreMotionListener
+	implements UpdateListener, PreMotionListener
 {
 	private final SliderSetting delay = new SliderSetting("Delay",
 		"Ticks between each hit.", 2, 1, 20, 1, ValueDisplay.INTEGER);
@@ -85,39 +85,23 @@ public final class AutoMiningHack extends Hack
 		"Minimum amount of trash needed to trigger a social cleanup session.", 5, 1, 15, 1,
 		ValueDisplay.INTEGER);
 		
-	private final SliderSetting maxReactDelay = new SliderSetting("Max React Delay",
-		"Random delay before responding to items picked up from the ground.", 30.0, 0.0, 60.0, 1.0,
-		ValueDisplay.DECIMAL);
-		
 	private final SliderSetting itemInterval = new SliderSetting("Item Interval",
 		"Delay between dropping individual items in seconds.", 0.3, 0.1, 2.0, 0.1,
 		ValueDisplay.DECIMAL);
-		
-	private final SliderSetting turnSpeed = new SliderSetting("Turn Speed",
-		"Smoothness of the stealth rotation.", 45, 5, 180, 5,
-		ValueDisplay.INTEGER);
 	
 	private long lastDropTime;
-	private final Map<String, CheckboxSetting> masterFilters =
-		new LinkedHashMap<>();
-	private final Map<String, CheckboxSetting> filters = new LinkedHashMap<>();
-	private final Map<Item, Integer> inventorySnapshot = new HashMap<>();
-	private boolean wasInGame;
-	private boolean needsCleanup;
-	private boolean urgentCleanup;
-	private long plannedCleanupTime;
-	private final Random random = new Random();
-	
 	private int cooldown;
+	private boolean wasInGame;
 	
-	// Drop Session State Machine
-	private enum DropPhase { IDLE, ROTATING_TO, DROPPING, ROTATING_BACK }
+	private final Map<String, CheckboxSetting> masterFilters = new LinkedHashMap<>();
+	private final Map<String, CheckboxSetting> filters = new HashMap<>();
+	private final Map<Item, Integer> inventorySnapshot = new HashMap<>();
+	
+	private enum DropPhase { IDLE, DROPPING }
 	private DropPhase dropPhase = DropPhase.IDLE;
 	private final List<Integer> dropQueue = new ArrayList<>();
-	private Rotation originalMiningRotation;
-	private Rotation targetDropRotation;
-	private Rotation currentSmoothRotation;
-	private int itemDropCooldown;
+	
+	private int lastStability = 20;
 	
 	private Field gridField;
 	private Field treasuresField;
@@ -148,14 +132,11 @@ public final class AutoMiningHack extends Hack
 		addSetting(minStability);
 		addSetting(autoHammer);
 		addSetting(avoidBedrock);
-		addSetting(continuousDrop);
-		addSetting(dropDelay);
-		addSetting(stealthDropper);
 		addSetting(enableAutoDrop);
+		addSetting(continuousDrop);
 		addSetting(minItemsToDrop);
-		addSetting(maxReactDelay);
 		addSetting(itemInterval);
-		addSetting(turnSpeed);
+		addSetting(dropDelay);
 		
 		initFilters();
 	}
@@ -274,13 +255,9 @@ public final class AutoMiningHack extends Hack
 	{
 		cooldown = 0;
 		wasInGame = false;
-		needsCleanup = false;
-		urgentCleanup = false;
-		plannedCleanupTime = 0;
 		dropPhase = DropPhase.IDLE;
 		dropQueue.clear();
 		EVENTS.add(UpdateListener.class, this);
-		EVENTS.add(PacketInputListener.class, this);
 		EVENTS.add(PreMotionListener.class, this);
 	}
 	
@@ -288,25 +265,7 @@ public final class AutoMiningHack extends Hack
 	protected void onDisable()
 	{
 		EVENTS.remove(UpdateListener.class, this);
-		EVENTS.remove(PacketInputListener.class, this);
 		EVENTS.remove(PreMotionListener.class, this);
-	}
-	
-	@Override
-	public void onReceivedPacket(PacketInputEvent event)
-	{
-		if(!enableAutoDrop.isChecked() || !continuousDrop.isChecked())
-			return;
-		
-		if(event.getPacket() instanceof ClientboundTakeItemEntityPacket || 
-		  (event.getPacket() instanceof ClientboundContainerSetSlotPacket p && p.getContainerId() == 0))
-		{
-			if(dropPhase == DropPhase.IDLE && plannedCleanupTime == 0)
-			{
-				long delay = (long)(random.nextDouble() * maxReactDelay.getValue() * 1000);
-				plannedCleanupTime = System.currentTimeMillis() + delay;
-			}
-		}
 	}
 	
 	@Override
@@ -315,25 +274,27 @@ public final class AutoMiningHack extends Hack
 		Screen screen = MC.screen;
 		boolean isInGame = screen != null && isMinigameScreen(screen);
 		
-		if(isInGame && !wasInGame)
-			takeInventorySnapshot();
-		else if(!isInGame && wasInGame)
-			urgentCleanup = true;
-		
-		wasInGame = isInGame;
-		
-		if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
+		if(isInGame)
 		{
-			long now = System.currentTimeMillis();
-			boolean timeToCleanup = plannedCleanupTime > 0 && now >= plannedCleanupTime;
-			
-			if(urgentCleanup || (timeToCleanup && countUnwantedItems() >= (int)minItemsToDrop.getValue()))
+			if(!wasInGame)
 			{
-				dropUnwantedItems();
-				urgentCleanup = false;
-				plannedCleanupTime = 0;
+				takeInventorySnapshot();
+				if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
+					dropUnwantedItems();
+			}
+			else if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
+			{
+				// We don't trigger by count anymore to avoid suspicious reactions to items thrown by players.
+				// The actual trigger is now handled inside the minigame loop via stability reset.
 			}
 		}
+		else if(wasInGame)
+		{
+			if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
+				dropUnwantedItems();
+		}
+		
+		wasInGame = isInGame;
 		
 		if(cooldown > 0)
 		{
@@ -360,6 +321,15 @@ public final class AutoMiningHack extends Hack
 				initReflection(grid);
 			
 			int stability = stabilityRemainingField.getInt(grid);
+			
+			// Detect New Floor: Stability resets to max (usually 20 or higher) after being low
+			if(stability > lastStability + 5 && stability >= 15 && dropPhase == DropPhase.IDLE)
+			{
+				if(enableAutoDrop.isChecked())
+					dropUnwantedItems();
+			}
+			lastStability = stability;
+			
 			if(stopAtStability.isChecked() && stability < minStability.getValue())
 				return;
 			
@@ -459,132 +429,53 @@ public final class AutoMiningHack extends Hack
 				inventorySnapshot.getOrDefault(item, 0) + stack.getCount());
 		}
 	}
-	private void dropUnwantedItems()
-	{
-		if(dropPhase != DropPhase.IDLE)
-			return;
-
-		long currentTime = System.currentTimeMillis();
-		if(currentTime - lastDropTime < dropDelay.getValue() * 1000)
-			return;
-		
-		dropQueue.clear();
-		for(int i = 0; i < 36; i++)
-		{
-			ItemStack stack = MC.player.getInventory().getItem(i);
-			if(stack.isEmpty())
-				continue;
-			
-			Item item = stack.getItem();
-			int currentCount = stack.getCount();
-			
-			if(isUnwanted(item))
-			{
-				if(continuousDrop.isChecked())
-					dropQueue.add(i);
-				else
-				{
-					int oldCount = inventorySnapshot.getOrDefault(item, 0);
-					if(currentCount > oldCount)
-						dropQueue.add(i);
-				}
-			}
-		}
-		
-		if(!dropQueue.isEmpty())
-		{
-			if(stealthDropper.isChecked())
-			{
-				targetDropRotation = findSafeDropRotation();
-				originalMiningRotation = WURST.getRotationFaker().isFakeRotation() ?
-					new Rotation(WURST.getRotationFaker().getServerYaw(), 
-								 WURST.getRotationFaker().getServerPitch()) :
-					new Rotation(MC.player.getYRot(), MC.player.getXRot());
-				currentSmoothRotation = new Rotation(originalMiningRotation.yaw(), originalMiningRotation.pitch());
-				dropPhase = DropPhase.ROTATING_TO;
-			}
-			else
-			{
-				// Backward compatibility for non-stealth batch drop
-				for(int slot : dropQueue)
-					dropStack(slot);
-				
-				lastDropTime = System.currentTimeMillis();
-				dropQueue.clear();
-				takeInventorySnapshot();
-			}
-		}
-	}
 	
 	public boolean isDropping()
 	{
 		return dropPhase != DropPhase.IDLE;
 	}
-	
+
+	private void dropUnwantedItems()
+	{
+		dropQueue.clear();
+		for(int i = 9; i < 45; i++)
+		{
+			ItemStack stack = MC.player.getInventory().getItem(i < 36 ? i : i - 36);
+			if(stack.isEmpty())
+				continue;
+
+			if(isUnwanted(stack.getItem()))
+				dropQueue.add(i);
+		}
+
+		if(!dropQueue.isEmpty())
+			dropPhase = DropPhase.DROPPING;
+	}
+
 	@Override
 	public void onPreMotion()
 	{
 		if(dropPhase == DropPhase.IDLE)
 			return;
-		
-		float speed = (float)turnSpeed.getValue();
-		
-		switch(dropPhase)
+
+		if(dropQueue.isEmpty())
 		{
-			case ROTATING_TO:
-				float nextYaw = RotationUtils.limitAngleChange(currentSmoothRotation.yaw(), targetDropRotation.yaw(), speed);
-				float nextPitch = RotationUtils.limitAngleChange(currentSmoothRotation.pitch(), targetDropRotation.pitch(), speed);
-				currentSmoothRotation = new Rotation(nextYaw, nextPitch);
-				
-				WURST.getRotationFaker().faceVectorPacket(
-					RotationUtils.getEyesPos().add(currentSmoothRotation.toLookVec().scale(5)));
-				
-				if(currentSmoothRotation.getAngleTo(targetDropRotation) < 1.0)
-				{
-					dropPhase = DropPhase.DROPPING;
-					itemDropCooldown = 0;
-				}
-				break;
-				
-			case DROPPING:
-				// Maintain silent rotation
-				WURST.getRotationFaker().faceVectorPacket(
-					RotationUtils.getEyesPos().add(targetDropRotation.toLookVec().scale(5)));
-				
-				if(itemDropCooldown > 0)
-				{
-					itemDropCooldown--;
-				}
-				else if(!dropQueue.isEmpty())
-				{
-					int slot = dropQueue.remove(0);
-					dropStack(slot);
-					itemDropCooldown = (int)(itemInterval.getValue() * 20); // seconds to ticks
-				}
-				else
-				{
-					dropPhase = DropPhase.ROTATING_BACK;
-				}
-				break;
-				
-			case ROTATING_BACK:
-				float backYaw = RotationUtils.limitAngleChange(currentSmoothRotation.yaw(), originalMiningRotation.yaw(), speed);
-				float backPitch = RotationUtils.limitAngleChange(currentSmoothRotation.pitch(), originalMiningRotation.pitch(), speed);
-				currentSmoothRotation = new Rotation(backYaw, backPitch);
-				
-				WURST.getRotationFaker().faceVectorPacket(
-					RotationUtils.getEyesPos().add(currentSmoothRotation.toLookVec().scale(5)));
-				
-				if(currentSmoothRotation.getAngleTo(originalMiningRotation) < 1.0)
-				{
-					dropPhase = DropPhase.IDLE;
-					lastDropTime = System.currentTimeMillis();
-					takeInventorySnapshot();
-				}
-				break;
+			dropPhase = DropPhase.IDLE;
+			return;
 		}
+
+		long now = System.currentTimeMillis();
+		if(now - lastDropTime < itemInterval.getValue() * 1000)
+			return;
+
+		int slot = dropQueue.remove(0);
+		dropStack(slot);
+		lastDropTime = now;
+		
+		if(dropQueue.isEmpty())
+			takeInventorySnapshot();
 	}
-	
+
 	private Rotation findSafeDropRotation()
 	{
 		float yaw = MC.player.getYRot();
@@ -621,7 +512,7 @@ public final class AutoMiningHack extends Hack
 		
 		return bestRotation;
 	}
-	
+
 	private int getPriorityRank(Object treasure)
 	{
 		try
@@ -715,6 +606,26 @@ public final class AutoMiningHack extends Hack
 		return count;
 	}
 	
+	private int countNewUnwantedItems()
+	{
+		int count = 0;
+		for(int i = 0; i < 36; i++)
+		{
+			ItemStack stack = MC.player.getInventory().getItem(i);
+			if(stack.isEmpty())
+				continue;
+			
+			Item item = stack.getItem();
+			if(isUnwanted(item))
+			{
+				int oldCount = inventorySnapshot.getOrDefault(item, 0);
+				if(stack.getCount() > oldCount)
+					count++;
+			}
+		}
+		return count;
+	}
+
 	private void dropStack(int slot)
 	{
 		int networkSlot = slot < 9 ? slot + 36 : slot;

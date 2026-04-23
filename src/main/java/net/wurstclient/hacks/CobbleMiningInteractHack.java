@@ -409,15 +409,25 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		if(pathProcessor != null && !pathProcessor.isDone())
 		{
-			// Active avoidance: stop and repath if we dived into items
+			// Active avoidance: nudge or repath if items are in the way
 			if(avoidItems.isChecked())
 			{
 				List<ItemEntity> nearbyItems = MC.level.getEntitiesOfClass(ItemEntity.class, 
-					MC.player.getBoundingBox().inflate(0.3));
+					MC.player.getBoundingBox().inflate(0.6));
 				if(!nearbyItems.isEmpty())
 				{
-					stopMoving(); 
-					return true;
+					ItemEntity item = nearbyItems.get(0);
+					double dist = MC.player.distanceTo(item);
+					
+					// Nudge sideways away from item
+					Vec3 diff = MC.player.position().subtract(item.position()).normalize().scale(0.02);
+					MC.player.setDeltaMovement(MC.player.getDeltaMovement().add(diff.x, 0, diff.z));
+					
+					if(dist < 0.6)
+					{
+						stopMoving(); // Too close, force recalculation
+						return true;
+					}
 				}
 			}
 			
