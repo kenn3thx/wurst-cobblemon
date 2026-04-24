@@ -66,6 +66,7 @@ public final class HackList implements UpdateListener
 	public final AutoSwimHack autoSwimHack = new AutoSwimHack();
 	public final AutoSwitchHack autoSwitchHack = new AutoSwitchHack();
 	public final AutoSwordHack autoSwordHack = new AutoSwordHack();
+	public final AutoTideFishHack autoTideFishHack = new AutoTideFishHack();
 	public final AutoToolHack autoToolHack = new AutoToolHack();
 	public final AutoTotemHack autoTotemHack = new AutoTotemHack();
 	public final AutoWalkHack autoWalkHack = new AutoWalkHack();

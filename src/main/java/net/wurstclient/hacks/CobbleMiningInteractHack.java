@@ -8,7 +8,6 @@
 package net.wurstclient.hacks;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -48,7 +47,9 @@ import net.wurstclient.util.BlockUtils;
 import net.wurstclient.util.Rotation;
 import net.wurstclient.util.RotationUtils;
 
-@SearchTags({"mining interact", "auto open mining", "sparkle interact", "stealth", "silent interact", "auto confirm", "auto move", "ghost ai", "human-like", "pathfinder", "resilient"})
+@SearchTags({"mining interact", "auto open mining", "sparkle interact",
+	"stealth", "silent interact", "auto confirm", "auto move", "ghost ai",
+	"human-like", "pathfinder", "resilient"})
 public final class CobbleMiningInteractHack extends Hack
 	implements UpdateListener, PreMotionListener, RenderListener
 {
@@ -61,32 +62,37 @@ public final class CobbleMiningInteractHack extends Hack
 	private final SliderSetting smoothSpeed = new SliderSetting("Smooth speed",
 		"Speed of the camera rotation.", 45, 1, 180, 1, ValueDisplay.INTEGER);
 	
-	private final SliderSetting exitDelay = new SliderSetting("Exit delay",
-		"Seconds to wait after a mining game.", 2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL);
+	private final SliderSetting exitDelay =
+		new SliderSetting("Exit delay", "Seconds to wait after a mining game.",
+			2.0, 0.0, 10.0, 0.5, ValueDisplay.DECIMAL);
 	
-	private final CheckboxSetting autoConfirm = new CheckboxSetting("Auto-confirm",
-		"Automatically clicks 'Yes' in dialogue.", true);
+	private final CheckboxSetting autoConfirm = new CheckboxSetting(
+		"Auto-confirm", "Automatically clicks 'Yes' in dialogue.", true);
 	
-	private final SliderSetting confirmDelay = new SliderSetting("Confirm delay",
-		"Seconds to wait before auto-confirming.", 0.5, 0.0, 5.0, 0.1, ValueDisplay.DECIMAL);
+	private final SliderSetting confirmDelay = new SliderSetting(
+		"Confirm delay", "Seconds to wait before auto-confirming.", 0.5, 0.0,
+		5.0, 0.1, ValueDisplay.DECIMAL);
 	
 	private final CheckboxSetting autoMove = new CheckboxSetting("Auto-move",
 		"Automatically walks toward mining spots.", false);
 	
 	private final SliderSetting moveRange = new SliderSetting("Move range",
-		"Max distance to look for mining spots.", 20, 5, 50, 1, ValueDisplay.INTEGER);
+		"Max distance to look for mining spots.", 20, 5, 50, 1,
+		ValueDisplay.INTEGER);
 	
 	private final CheckboxSetting ghostAi = new CheckboxSetting("Ghost AI",
 		"Hyper-realistic human-like behaviors.", false);
 	
-	private final CheckboxSetting socialInteraction = new CheckboxSetting("Social Interaction",
-		"Looks at nearby players and sneaks.", true);
-		
-	private final CheckboxSetting avoidItems = new CheckboxSetting("Avoid Items",
+	private final CheckboxSetting socialInteraction = new CheckboxSetting(
+		"Social Interaction", "Looks at nearby players and sneaks.", true);
+	
+	private final CheckboxSetting avoidItems = new CheckboxSetting(
+		"Avoid Items",
 		"Avoid standing on or walking near dropped items on the ground.", true);
 	
-	private final SliderSetting humanJitter = new SliderSetting("Human Jitter",
-		"Intensity of camera vibration.", 0.5, 0.0, 2.0, 0.1, ValueDisplay.DECIMAL);
+	private final SliderSetting humanJitter =
+		new SliderSetting("Human Jitter", "Intensity of camera vibration.", 0.5,
+			0.0, 2.0, 0.1, ValueDisplay.DECIMAL);
 	
 	private final CheckboxSetting debugMode = new CheckboxSetting("Debug Mode",
 		"Shows the calculated path on screen.", false);
@@ -107,14 +113,23 @@ public final class CobbleMiningInteractHack extends Hack
 	private long pathingStartTime;
 	private BlockPos lastResetPos;
 	
-	private enum SocialState { NONE, STARE, SNEAK, RESUME }
+	private enum SocialState
+	{
+		NONE,
+		STARE,
+		SNEAK,
+		RESUME
+	}
+	
 	private SocialState socialState = SocialState.NONE;
 	private Player trackedPlayer;
 	private long socialStartTime;
 	private final Random random = new Random();
 	
-	private final Map<BlockPos, Long> targetBlacklist = new HashMap<>(); // Recently mined
-	private final Map<BlockPos, Long> unreachableTargets = new HashMap<>(); // Pathfinding failed
+	private final Map<BlockPos, Long> targetBlacklist = new HashMap<>(); // Recently
+																			// mined
+	private final Map<BlockPos, Long> unreachableTargets = new HashMap<>(); // Pathfinding
+																			// failed
 	
 	public CobbleMiningInteractHack()
 	{
@@ -176,7 +191,8 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		if(socialState != SocialState.NONE)
 		{
-			if(pathProcessor != null) stopMoving();
+			if(pathProcessor != null)
+				stopMoving();
 			return;
 		}
 		
@@ -189,13 +205,13 @@ public final class CobbleMiningInteractHack extends Hack
 				dialogOpenTime = System.currentTimeMillis();
 			}
 			
-			if(System.currentTimeMillis() - dialogOpenTime >= confirmDelay.getValue() * 1000)
+			if(System.currentTimeMillis()
+				- dialogOpenTime >= confirmDelay.getValue() * 1000)
 			{
 				confirmDig(screen);
 				lastDialogScreen = null;
 			}
-		}
-		else
+		}else
 			lastDialogScreen = null;
 		
 		boolean isInMinigame = screen != null && isMinigameScreen(screen);
@@ -204,9 +220,11 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		wasInMinigame = isInMinigame;
 		
-		if(screen != null || System.currentTimeMillis() - exitTimestamp < exitDelay.getValue() * 1000)
+		if(screen != null || System.currentTimeMillis()
+			- exitTimestamp < exitDelay.getValue() * 1000)
 		{
-			if(pathProcessor != null) stopMoving();
+			if(pathProcessor != null)
+				stopMoving();
 			return;
 		}
 		
@@ -214,7 +232,8 @@ public final class CobbleMiningInteractHack extends Hack
 		AutoMiningHack amh = WurstClient.INSTANCE.getHax().autoMiningHack;
 		if(amh != null && amh.isEnabled() && amh.isDropping())
 		{
-			if(pathProcessor != null) stopMoving();
+			if(pathProcessor != null)
+				stopMoving();
 			return;
 		}
 		
@@ -226,8 +245,12 @@ public final class CobbleMiningInteractHack extends Hack
 		
 		// Map cleanup
 		long now = System.currentTimeMillis();
-		targetBlacklist.entrySet().removeIf(entry -> now - entry.getValue() > 10000);
-		unreachableTargets.entrySet().removeIf(entry -> now - entry.getValue() > 5000); // Reduced to 5s for social responsiveness
+		targetBlacklist.entrySet()
+			.removeIf(entry -> now - entry.getValue() > 10000);
+		unreachableTargets.entrySet()
+			.removeIf(entry -> now - entry.getValue() > 5000); // Reduced to 5s
+																// for social
+																// responsiveness
 		
 		// Dynamic reset when moving
 		BlockPos currentPos = MC.player.blockPosition();
@@ -241,27 +264,35 @@ public final class CobbleMiningInteractHack extends Hack
 		{
 			if(getSpotsMethod == null)
 			{
-				Class<?> c = Class.forName("handyfon.pickaxeminigame.client.PickaxeminigameClient");
-				getSpotsMethod = c.getDeclaredMethod("getSpotsForCurrentDimension");
+				Class<?> c = Class.forName(
+					"handyfon.pickaxeminigame.client.PickaxeminigameClient");
+				getSpotsMethod =
+					c.getDeclaredMethod("getSpotsForCurrentDimension");
 				getSpotsMethod.setAccessible(true);
 			}
 			
 			@SuppressWarnings("unchecked")
-			Collection<BlockPos> spots = (Collection<BlockPos>)getSpotsMethod.invoke(null);
+			Collection<BlockPos> spots =
+				(Collection<BlockPos>)getSpotsMethod.invoke(null);
 			if(spots == null || spots.isEmpty())
 			{
-				if(pathProcessor != null) stopMoving();
+				if(pathProcessor != null)
+					stopMoving();
 				return;
 			}
 			
-			// 1. Proximity Priority: Try to interact with ANY spot in range first (Bypasses movement logic)
+			// 1. Proximity Priority: Try to interact with ANY spot in range
+			// first (Bypasses movement logic)
 			double interactR = range.getValue();
 			for(BlockPos spot : spots)
 			{
-				if(targetBlacklist.containsKey(spot)) continue;
-				if(MC.player.distanceToSqr(Vec3.atCenterOf(spot)) <= interactR * interactR)
+				if(targetBlacklist.containsKey(spot))
+					continue;
+				if(MC.player.distanceToSqr(Vec3.atCenterOf(spot)) <= interactR
+					* interactR)
 				{
-					if(pathProcessor != null) stopMoving();
+					if(pathProcessor != null)
+						stopMoving();
 					handleTarget(spot);
 					return; // Interacted!
 				}
@@ -269,42 +300,48 @@ public final class CobbleMiningInteractHack extends Hack
 			
 			// 2. Movement Logic: Search for pathing targets
 			double moveR = moveRange.getValue();
-			List<BlockPos> validSpots = spots.stream()
-				.filter(pos -> !targetBlacklist.containsKey(pos))
-				.filter(pos -> !unreachableTargets.containsKey(pos))
-				.filter(pos -> MC.player.distanceToSqr(Vec3.atCenterOf(pos)) <= moveR * moveR)
-				.sorted(Comparator.comparingDouble(pos -> MC.player.distanceToSqr(Vec3.atCenterOf(pos))))
-				.collect(Collectors.toList());
+			List<BlockPos> validSpots =
+				spots.stream().filter(pos -> !targetBlacklist.containsKey(pos))
+					.filter(pos -> !unreachableTargets.containsKey(pos))
+					.filter(pos -> MC.player
+						.distanceToSqr(Vec3.atCenterOf(pos)) <= moveR * moveR)
+					.sorted(Comparator.comparingDouble(
+						pos -> MC.player.distanceToSqr(Vec3.atCenterOf(pos))))
+					.collect(Collectors.toList());
 			
 			if(validSpots.isEmpty())
 			{
-				if(pathProcessor != null) stopMoving();
+				if(pathProcessor != null)
+					stopMoving();
 				return;
 			}
 			
 			// Iterative fallback search
 			for(BlockPos target : validSpots)
 			{
-				double distRaw = MC.player.distanceToSqr(Vec3.atCenterOf(target));
+				double distRaw =
+					MC.player.distanceToSqr(Vec3.atCenterOf(target));
 				interactR = range.getValue();
 				
 				if(distRaw <= interactR * interactR)
 				{
-					if(pathProcessor != null) stopMoving();
+					if(pathProcessor != null)
+						stopMoving();
 					handleTarget(target);
 					return; // Success
-				}
-				else if(autoMove.isChecked())
+				}else if(autoMove.isChecked())
 				{
 					if(tryAutoMove(target))
 						return; // Success
 					else
-						unreachableTargets.put(target, System.currentTimeMillis());
+						unreachableTargets.put(target,
+							System.currentTimeMillis());
 				}
 			}
 			
 			// If no target was successful
-			if(pathProcessor != null) stopMoving();
+			if(pathProcessor != null)
+				stopMoving();
 			
 		}catch(Exception e)
 		{
@@ -314,59 +351,63 @@ public final class CobbleMiningInteractHack extends Hack
 	
 	private void updateSocial()
 	{
-		if(!socialInteraction.isChecked()) return;
+		if(!socialInteraction.isChecked())
+			return;
 		long now = System.currentTimeMillis();
 		
 		switch(socialState)
 		{
 			case NONE:
-				Player target = MC.level.players().stream()
-					.filter(p -> p != MC.player && !p.isRemoved() && MC.player.distanceTo(p) < 10)
-					.min(Comparator.comparingDouble(p -> MC.player.distanceTo(p)))
-					.orElse(null);
-				
-				if(target != null && random.nextInt(100) < 5)
-				{
-					socialState = SocialState.STARE;
-					trackedPlayer = target;
-					socialStartTime = now;
-				}
-				break;
-				
+			Player target = MC.level.players().stream()
+				.filter(p -> p != MC.player && !p.isRemoved()
+					&& MC.player.distanceTo(p) < 10)
+				.min(Comparator.comparingDouble(p -> MC.player.distanceTo(p)))
+				.orElse(null);
+			
+			if(target != null && random.nextInt(100) < 5)
+			{
+				socialState = SocialState.STARE;
+				trackedPlayer = target;
+				socialStartTime = now;
+			}
+			break;
+			
 			case STARE:
-				if(trackedPlayer == null || trackedPlayer.isRemoved() || MC.player.distanceTo(trackedPlayer) > 15)
-				{
-					socialState = SocialState.NONE;
-					return;
-				}
-				
-				Vec3 headPos = trackedPlayer.getEyePosition();
-				Rotation needed = RotationUtils.getNeededRotations(headPos);
-				Rotation next = RotationUtils.slowlyTurnTowards(needed, (float)smoothSpeed.getValue());
-				MC.player.setYRot(next.yaw());
-				MC.player.setXRot(next.pitch());
-				
-				if(now - socialStartTime > 1500)
-				{
-					socialState = SocialState.SNEAK;
-					socialStartTime = now;
-				}
-				break;
-				
-			case SNEAK:
-				MC.options.keyShift.setDown(true);
-				if(now - socialStartTime > 200)
-				{
-					MC.options.keyShift.setDown(false);
-					socialState = SocialState.RESUME;
-					socialStartTime = now;
-				}
-				break;
-				
-			case RESUME:
+			if(trackedPlayer == null || trackedPlayer.isRemoved()
+				|| MC.player.distanceTo(trackedPlayer) > 15)
+			{
 				socialState = SocialState.NONE;
-				trackedPlayer = null;
-				break;
+				return;
+			}
+			
+			Vec3 headPos = trackedPlayer.getEyePosition();
+			Rotation needed = RotationUtils.getNeededRotations(headPos);
+			Rotation next = RotationUtils.slowlyTurnTowards(needed,
+				(float)smoothSpeed.getValue());
+			MC.player.setYRot(next.yaw());
+			MC.player.setXRot(next.pitch());
+			
+			if(now - socialStartTime > 1500)
+			{
+				socialState = SocialState.SNEAK;
+				socialStartTime = now;
+			}
+			break;
+			
+			case SNEAK:
+			MC.options.keyShift.setDown(true);
+			if(now - socialStartTime > 200)
+			{
+				MC.options.keyShift.setDown(false);
+				socialState = SocialState.RESUME;
+				socialStartTime = now;
+			}
+			break;
+			
+			case RESUME:
+			socialState = SocialState.NONE;
+			trackedPlayer = null;
+			break;
 		}
 	}
 	
@@ -375,7 +416,7 @@ public final class CobbleMiningInteractHack extends Hack
 		BlockPos standingSpot = findStandingSpot(orePos);
 		if(standingSpot == null)
 			return false; // Try next ore
-		
+			
 		if(currentTargetOre == null || !currentTargetOre.equals(orePos))
 		{
 			stopMoving();
@@ -400,7 +441,8 @@ public final class CobbleMiningInteractHack extends Hack
 				}
 			}
 			
-			if(pathFinder.isFailed() || (System.currentTimeMillis() - pathingStartTime > 5000))
+			if(pathFinder.isFailed()
+				|| (System.currentTimeMillis() - pathingStartTime > 5000))
 			{
 				stopMoving();
 				return false; // Try next ore
@@ -412,16 +454,18 @@ public final class CobbleMiningInteractHack extends Hack
 			// Active avoidance: nudge or repath if items are in the way
 			if(avoidItems.isChecked())
 			{
-				List<ItemEntity> nearbyItems = MC.level.getEntitiesOfClass(ItemEntity.class, 
-					MC.player.getBoundingBox().inflate(0.6));
+				List<ItemEntity> nearbyItems = MC.level.getEntitiesOfClass(
+					ItemEntity.class, MC.player.getBoundingBox().inflate(0.6));
 				if(!nearbyItems.isEmpty())
 				{
 					ItemEntity item = nearbyItems.get(0);
 					double dist = MC.player.distanceTo(item);
 					
 					// Nudge sideways away from item
-					Vec3 diff = MC.player.position().subtract(item.position()).normalize().scale(0.02);
-					MC.player.setDeltaMovement(MC.player.getDeltaMovement().add(diff.x, 0, diff.z));
+					Vec3 diff = MC.player.position().subtract(item.position())
+						.normalize().scale(0.02);
+					MC.player.setDeltaMovement(
+						MC.player.getDeltaMovement().add(diff.x, 0, diff.z));
 					
 					if(dist < 0.6)
 					{
@@ -436,11 +480,11 @@ public final class CobbleMiningInteractHack extends Hack
 			if(random.nextInt(100) < 2)
 				MC.player.swing(InteractionHand.MAIN_HAND);
 			return true; // Occupied with this target
-		}
-		else if(pathProcessor != null && pathProcessor.isDone())
+		}else if(pathProcessor != null && pathProcessor.isDone())
 		{
 			stopMoving();
-			return false; // Reached goal, wait for onUpdate to handle interaction
+			return false; // Reached goal, wait for onUpdate to handle
+							// interaction
 		}
 		
 		return true; // Still thinking about this target
@@ -448,25 +492,30 @@ public final class CobbleMiningInteractHack extends Hack
 	
 	private void applyHumanJitter()
 	{
-		if(!ghostAi.isChecked()) return;
+		if(!ghostAi.isChecked())
+			return;
 		float intensity = (float)humanJitter.getValue();
 		if(intensity > 0)
 		{
-			MC.player.setYRot(MC.player.getYRot() + (random.nextFloat() - 0.5f) * intensity);
-			MC.player.setXRot(MC.player.getXRot() + (random.nextFloat() - 0.5f) * intensity);
+			MC.player.setYRot(
+				MC.player.getYRot() + (random.nextFloat() - 0.5f) * intensity);
+			MC.player.setXRot(
+				MC.player.getXRot() + (random.nextFloat() - 0.5f) * intensity);
 		}
 	}
 	
 	private boolean isValidStandingSpot(BlockPos pos, boolean checkItems)
 	{
-		if(!isPassable(pos) || !isPassable(pos.above()) || !isSolid(pos.below()))
+		if(!isPassable(pos) || !isPassable(pos.above())
+			|| !isSolid(pos.below()))
 			return false;
-			
+		
 		if(checkItems && avoidItems.isChecked())
 		{
 			// Check for items on or near the spot
-			List<ItemEntity> items = MC.level.getEntitiesOfClass(ItemEntity.class, 
-				new net.minecraft.world.phys.AABB(pos).inflate(0.5));
+			List<ItemEntity> items =
+				MC.level.getEntitiesOfClass(ItemEntity.class,
+					new net.minecraft.world.phys.AABB(pos).inflate(0.5));
 			if(!items.isEmpty())
 				return false;
 		}
@@ -497,7 +546,8 @@ public final class CobbleMiningInteractHack extends Hack
 					BlockPos pos = orePos.offset(x, y, z);
 					if(isValidStandingSpot(pos, checkItems))
 					{
-						if(orePos.distSqr(pos) <= range.getValue() * range.getValue())
+						if(orePos.distSqr(pos) <= range.getValue()
+							* range.getValue())
 							return pos;
 					}
 				}
@@ -515,7 +565,8 @@ public final class CobbleMiningInteractHack extends Hack
 	private boolean isSolid(BlockPos pos)
 	{
 		BlockState state = BlockUtils.getState(pos);
-		return state.blocksMotion() && !(state.getBlock() instanceof net.minecraft.world.level.block.SignBlock);
+		return state.blocksMotion() && !(state
+			.getBlock() instanceof net.minecraft.world.level.block.SignBlock);
 	}
 	
 	private void handleTarget(BlockPos pos)
@@ -527,37 +578,38 @@ public final class CobbleMiningInteractHack extends Hack
 		switch(mode.getSelected())
 		{
 			case SNAP:
-				MC.player.setYRot(needed.yaw());
-				MC.player.setXRot(needed.pitch());
+			MC.player.setYRot(needed.yaw());
+			MC.player.setXRot(needed.pitch());
+			executeInteract(pos);
+			cooldown = 10;
+			break;
+			
+			case SMOOTH:
+			if(RotationUtils.isAlreadyFacing(needed))
+			{
 				executeInteract(pos);
 				cooldown = 10;
-				break;
-				
-			case SMOOTH:
-				if(RotationUtils.isAlreadyFacing(needed))
-				{
-					executeInteract(pos);
-					cooldown = 10;
-				}
-				else
-				{
-					Rotation next = RotationUtils.slowlyTurnTowards(needed, (float)smoothSpeed.getValue());
-					MC.player.setYRot(next.yaw());
-					MC.player.setXRot(next.pitch());
-				}
-				break;
-				
+			}else
+			{
+				Rotation next = RotationUtils.slowlyTurnTowards(needed,
+					(float)smoothSpeed.getValue());
+				MC.player.setYRot(next.yaw());
+				MC.player.setXRot(next.pitch());
+			}
+			break;
+			
 			case SILENT:
-				WurstClient.INSTANCE.getRotationFaker().faceVectorPacket(hitVec);
-				pendingSilentTarget = pos;
-				break;
+			WurstClient.INSTANCE.getRotationFaker().faceVectorPacket(hitVec);
+			pendingSilentTarget = pos;
+			break;
 		}
 	}
 	
 	@Override
 	public void onPreMotion()
 	{
-		if(pendingSilentTarget == null) return;
+		if(pendingSilentTarget == null)
+			return;
 		executeInteract(pendingSilentTarget);
 		pendingSilentTarget = null;
 		cooldown = 10;
@@ -566,14 +618,16 @@ public final class CobbleMiningInteractHack extends Hack
 	@Override
 	public void onRender(PoseStack matrixStack, float partialTicks)
 	{
-		if(debugMode.isChecked() && pathFinder != null && (pathFinder.isDone() || pathFinder.isFailed()))
+		if(debugMode.isChecked() && pathFinder != null
+			&& (pathFinder.isDone() || pathFinder.isFailed()))
 			pathFinder.renderPath(matrixStack, true, true);
 	}
 	
 	private void executeInteract(BlockPos pos)
 	{
 		Vec3 hitVec = Vec3.atCenterOf(pos);
-		BlockHitResult hitResult = new BlockHitResult(hitVec, Direction.UP, pos, false);
+		BlockHitResult hitResult =
+			new BlockHitResult(hitVec, Direction.UP, pos, false);
 		MC.gameMode.useItemOn(MC.player, InteractionHand.MAIN_HAND, hitResult);
 		MC.player.swing(InteractionHand.MAIN_HAND);
 	}
@@ -597,19 +651,21 @@ public final class CobbleMiningInteractHack extends Hack
 				buttonCount++;
 				if(buttonCount == 2)
 				{
-					if(pathProcessor != null) stopMoving();
+					if(pathProcessor != null)
+						stopMoving();
 					button.onPress();
 					return;
 				}
-			}
-			else if(child instanceof AbstractWidget widget && widget.getClass().getName().endsWith("$1"))
+			}else if(child instanceof AbstractWidget widget
+				&& widget.getClass().getName().endsWith("$1"))
 			{
 				buttonCount++;
 				if(buttonCount == 2)
 				{
 					if(widget instanceof Button b)
 					{
-						if(pathProcessor != null) stopMoving();
+						if(pathProcessor != null)
+							stopMoving();
 						b.onPress();
 					}
 					return;
@@ -630,7 +686,16 @@ public final class CobbleMiningInteractHack extends Hack
 		SILENT("Silent");
 		
 		private final String name;
-		private Mode(String name) { this.name = name; }
-		@Override public String toString() { return name; }
+		
+		private Mode(String name)
+		{
+			this.name = name;
+		}
+		
+		@Override
+		public String toString()
+		{
+			return name;
+		}
 	}
 }

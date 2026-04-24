@@ -134,6 +134,9 @@ public final class AutoFishHack extends Hack
 	@Override
 	public void onUpdate()
 	{
+		if(AutoTideFishHack.isMinigameActive())
+			return;
+		
 		// update timers
 		if(castRodTimer > 0)
 			castRodTimer--;

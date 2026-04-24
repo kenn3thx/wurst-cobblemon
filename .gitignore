@@ -37,3 +37,7 @@ desktop.ini
 
 # Environment variables
 .env
+
+
+.tmp_tide_src
+.tmp_cobblemon_src

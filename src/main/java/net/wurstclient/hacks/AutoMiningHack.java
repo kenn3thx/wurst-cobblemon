@@ -14,21 +14,15 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
-import net.minecraft.network.protocol.game.ClientboundTakeItemEntityPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
-import net.wurstclient.events.PacketInputListener;
 import net.wurstclient.events.PreMotionListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
@@ -41,9 +35,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.core.Direction;
 
-@SearchTags({"auto mining", "mining minigame bot", "fossil miner", "item filter", "stealth dropper"})
+@SearchTags({"auto mining", "mining minigame bot", "fossil miner",
+	"item filter", "stealth dropper"})
 public final class AutoMiningHack extends Hack
 	implements UpdateListener, PreMotionListener
 {
@@ -55,19 +49,21 @@ public final class AutoMiningHack extends Hack
 		"Stops mining before the wall collapses to save the node for later.",
 		true);
 	
-	private final SliderSetting minStability = new SliderSetting("Min Stability",
-		"Stop mining if wall stability is below this.", 5, 0, 20, 1,
-		ValueDisplay.INTEGER);
+	private final SliderSetting minStability = new SliderSetting(
+		"Min Stability", "Stop mining if wall stability is below this.", 5, 0,
+		20, 1, ValueDisplay.INTEGER);
 	
-	private final CheckboxSetting autoHammer = new CheckboxSetting("Auto Hammer",
-		"Automatically uses the Hammer (3x3) for efficiency.", true);
+	private final CheckboxSetting autoHammer =
+		new CheckboxSetting("Auto Hammer",
+			"Automatically uses the Hammer (3x3) for efficiency.", true);
 	
 	private final CheckboxSetting avoidBedrock = new CheckboxSetting(
 		"Avoid Bedrock", "Never hit bedrock tiles to save stability.", true);
 	
-	private final CheckboxSetting continuousDrop = new CheckboxSetting(
-		"Continuous Drop",
-		"Automatically drops unwanted items whenever they are picked up.", true);
+	private final CheckboxSetting continuousDrop =
+		new CheckboxSetting("Continuous Drop",
+			"Automatically drops unwanted items whenever they are picked up.",
+			true);
 	
 	private final SliderSetting dropDelay = new SliderSetting("Drop Delay",
 		"Seconds to wait between dropping items.", 3.0, 0.5, 10.0, 0.5,
@@ -77,27 +73,34 @@ public final class AutoMiningHack extends Hack
 		"Stealth Dropper",
 		"Tosses items into open space using silent rotations to avoid re-pickup.",
 		true);
-		
+	
 	private final CheckboxSetting enableAutoDrop = new CheckboxSetting(
 		"Enable Auto Drop", "Master toggle for item cleanup.", true);
-		
-	private final SliderSetting minItemsToDrop = new SliderSetting("Min Items to Drop",
-		"Minimum amount of trash needed to trigger a social cleanup session.", 5, 1, 15, 1,
-		ValueDisplay.INTEGER);
-		
-	private final SliderSetting itemInterval = new SliderSetting("Item Interval",
-		"Delay between dropping individual items in seconds.", 0.3, 0.1, 2.0, 0.1,
-		ValueDisplay.DECIMAL);
+	
+	private final SliderSetting minItemsToDrop = new SliderSetting(
+		"Min Items to Drop",
+		"Minimum amount of trash needed to trigger a social cleanup session.",
+		5, 1, 15, 1, ValueDisplay.INTEGER);
+	
+	private final SliderSetting itemInterval = new SliderSetting(
+		"Item Interval", "Delay between dropping individual items in seconds.",
+		0.3, 0.1, 2.0, 0.1, ValueDisplay.DECIMAL);
 	
 	private long lastDropTime;
 	private int cooldown;
 	private boolean wasInGame;
 	
-	private final Map<String, CheckboxSetting> masterFilters = new LinkedHashMap<>();
+	private final Map<String, CheckboxSetting> masterFilters =
+		new LinkedHashMap<>();
 	private final Map<String, CheckboxSetting> filters = new HashMap<>();
 	private final Map<Item, Integer> inventorySnapshot = new HashMap<>();
 	
-	private enum DropPhase { IDLE, DROPPING }
+	private enum DropPhase
+	{
+		IDLE,
+		DROPPING
+	}
+	
 	private DropPhase dropPhase = DropPhase.IDLE;
 	private final List<Integer> dropQueue = new ArrayList<>();
 	
@@ -146,11 +149,11 @@ public final class AutoMiningHack extends Hack
 		// Fossils Category
 		CheckboxSetting masterFossil =
 			addMasterFilter("Drop All: Fossils", "fossils");
-		String[] fossils = {"helix_fossil", "dome_fossil", "old_amber",
-			"root_fossil", "claw_fossil", "armor_fossil", "cover_fossil",
-			"plume_fossil", "jaw_fossil", "sail_fossil", "skull_fossil",
-			"fossilized_bird", "fossilized_fish", "fossilized_dino",
-			"fossilized_drake"};
+		String[] fossils =
+			{"helix_fossil", "dome_fossil", "old_amber", "root_fossil",
+				"claw_fossil", "armor_fossil", "cover_fossil", "plume_fossil",
+				"jaw_fossil", "sail_fossil", "skull_fossil", "fossilized_bird",
+				"fossilized_fish", "fossilized_dino", "fossilized_drake"};
 		for(String f : fossils)
 		{
 			String name = f.replace("_", " ");
@@ -171,8 +174,8 @@ public final class AutoMiningHack extends Hack
 		CheckboxSetting masterStone =
 			addMasterFilter("Drop All: Stones", "stones");
 		String[] stones = {"thunder_stone", "leaf_stone", "moon_stone",
-			"sun_stone", "shiny_stone", "dusk_stone", "dawn_stone", "fire_stone",
-			"water_stone", "ice_stone", "everstone"};
+			"sun_stone", "shiny_stone", "dusk_stone", "dawn_stone",
+			"fire_stone", "water_stone", "ice_stone", "everstone"};
 		for(String s : stones)
 		{
 			String name = s.replace("_", " ");
@@ -246,7 +249,8 @@ public final class AutoMiningHack extends Hack
 		filters.put(id, setting);
 		addSetting(setting);
 		
-		// Store master relation in the ID if needed, but here I'll use a prefix logic in the loop
+		// Store master relation in the ID if needed, but here I'll use a prefix
+		// logic in the loop
 		// or better, a custom map for check.
 	}
 	
@@ -281,14 +285,14 @@ public final class AutoMiningHack extends Hack
 				takeInventorySnapshot();
 				if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
 					dropUnwantedItems();
-			}
-			else if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
+			}else if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
 			{
-				// We don't trigger by count anymore to avoid suspicious reactions to items thrown by players.
-				// The actual trigger is now handled inside the minigame loop via stability reset.
+				// We don't trigger by count anymore to avoid suspicious
+				// reactions to items thrown by players.
+				// The actual trigger is now handled inside the minigame loop
+				// via stability reset.
 			}
-		}
-		else if(wasInGame)
+		}else if(wasInGame)
 		{
 			if(enableAutoDrop.isChecked() && dropPhase == DropPhase.IDLE)
 				dropUnwantedItems();
@@ -322,15 +326,18 @@ public final class AutoMiningHack extends Hack
 			
 			int stability = stabilityRemainingField.getInt(grid);
 			
-			// Detect New Floor: Stability resets to max (usually 20 or higher) after being low
-			if(stability > lastStability + 5 && stability >= 15 && dropPhase == DropPhase.IDLE)
+			// Detect New Floor: Stability resets to max (usually 20 or higher)
+			// after being low
+			if(stability > lastStability + 5 && stability >= 15
+				&& dropPhase == DropPhase.IDLE)
 			{
 				if(enableAutoDrop.isChecked())
 					dropUnwantedItems();
 			}
 			lastStability = stability;
 			
-			if(stopAtStability.isChecked() && stability < minStability.getValue())
+			if(stopAtStability.isChecked()
+				&& stability < minStability.getValue())
 				return;
 			
 			if(stability <= 0)
@@ -348,8 +355,9 @@ public final class AutoMiningHack extends Hack
 				int p1 = getPriorityRank(t1);
 				int p2 = getPriorityRank(t2);
 				if(p1 != p2)
-					return Integer.compare(p1, p2); // Lower rank = higher priority
-				
+					return Integer.compare(p1, p2); // Lower rank = higher
+													// priority
+					
 				// Same rank, compare rarity (Higher = better)
 				try
 				{
@@ -434,40 +442,41 @@ public final class AutoMiningHack extends Hack
 	{
 		return dropPhase != DropPhase.IDLE;
 	}
-
+	
 	private void dropUnwantedItems()
 	{
 		dropQueue.clear();
 		for(int i = 9; i < 45; i++)
 		{
-			ItemStack stack = MC.player.getInventory().getItem(i < 36 ? i : i - 36);
+			ItemStack stack =
+				MC.player.getInventory().getItem(i < 36 ? i : i - 36);
 			if(stack.isEmpty())
 				continue;
-
+			
 			if(isUnwanted(stack.getItem()))
 				dropQueue.add(i);
 		}
-
+		
 		if(!dropQueue.isEmpty())
 			dropPhase = DropPhase.DROPPING;
 	}
-
+	
 	@Override
 	public void onPreMotion()
 	{
 		if(dropPhase == DropPhase.IDLE)
 			return;
-
+		
 		if(dropQueue.isEmpty())
 		{
 			dropPhase = DropPhase.IDLE;
 			return;
 		}
-
+		
 		long now = System.currentTimeMillis();
 		if(now - lastDropTime < itemInterval.getValue() * 1000)
 			return;
-
+		
 		int slot = dropQueue.remove(0);
 		dropStack(slot);
 		lastDropTime = now;
@@ -475,7 +484,7 @@ public final class AutoMiningHack extends Hack
 		if(dropQueue.isEmpty())
 			takeInventorySnapshot();
 	}
-
+	
 	private Rotation findSafeDropRotation()
 	{
 		float yaw = MC.player.getYRot();
@@ -512,7 +521,7 @@ public final class AutoMiningHack extends Hack
 		
 		return bestRotation;
 	}
-
+	
 	private int getPriorityRank(Object treasure)
 	{
 		try
@@ -544,7 +553,7 @@ public final class AutoMiningHack extends Hack
 	{
 		if(!enableAutoDrop.isChecked())
 			return false;
-			
+		
 		String id = BuiltInRegistries.ITEM.getKey(item).toString();
 		
 		// Master category logic
@@ -564,14 +573,12 @@ public final class AutoMiningHack extends Hack
 		{
 			if(masterFilters.get("gems").isChecked())
 				return true;
-		}
-		else if(id.startsWith("mega_showdown:"))
+		}else if(id.startsWith("mega_showdown:"))
 		{
 			if(id.contains("_tera_shard"))
 				if(masterFilters.get("tera").isChecked())
 					return true;
-		}
-		else if(id.endsWith("_smithing_template"))
+		}else if(id.endsWith("_smithing_template"))
 		{
 			if(masterFilters.get("smithing").isChecked())
 				return true;
@@ -597,7 +604,8 @@ public final class AutoMiningHack extends Hack
 					count++;
 				else
 				{
-					int oldCount = inventorySnapshot.getOrDefault(stack.getItem(), 0);
+					int oldCount =
+						inventorySnapshot.getOrDefault(stack.getItem(), 0);
 					if(stack.getCount() > oldCount)
 						count++;
 				}
@@ -625,12 +633,12 @@ public final class AutoMiningHack extends Hack
 		}
 		return count;
 	}
-
+	
 	private void dropStack(int slot)
 	{
 		int networkSlot = slot < 9 ? slot + 36 : slot;
-		MC.gameMode.handleInventoryMouseClick(0, networkSlot, 1, ClickType.THROW,
-			MC.player);
+		MC.gameMode.handleInventoryMouseClick(0, networkSlot, 1,
+			ClickType.THROW, MC.player);
 	}
 	
 	private boolean tryHammer(Object grid, int x, int y, int[][] stone,

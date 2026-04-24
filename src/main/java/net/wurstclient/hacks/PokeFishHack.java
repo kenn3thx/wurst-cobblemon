@@ -124,6 +124,9 @@ public final class PokeFishHack extends Hack
 	@Override
 	public void onUpdate()
 	{
+		if(AutoTideFishHack.isMinigameActive())
+			return;
+		
 		if(castRodTimer > 0)
 			castRodTimer--;
 		if(reelInTimer > 0)
