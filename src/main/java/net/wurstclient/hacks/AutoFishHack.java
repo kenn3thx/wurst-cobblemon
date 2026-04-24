@@ -8,6 +8,7 @@
 package net.wurstclient.hacks;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.cobblemon.mod.common.item.interactive.PokerodItem;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
@@ -251,9 +252,15 @@ public final class AutoFishHack extends Hack
 	private boolean isFishing()
 	{
 		LocalPlayer player = MC.player;
-		return player != null && player.fishing != null
-			&& !player.fishing.isRemoved()
-			&& player.getMainHandItem().is(Items.FISHING_ROD);
+		if(player == null || player.fishing == null
+			|| player.fishing.isRemoved())
+			return false;
+		
+		net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
+		return stack.is(Items.FISHING_ROD)
+			|| stack.getItem() instanceof net.minecraft.world.item.FishingRodItem
+			|| stack.getItem() instanceof PokerodItem
+			|| stack.getItem().getClass().getName().contains("TideFishingRodItem");
 	}
 	
 	private enum BiteMode

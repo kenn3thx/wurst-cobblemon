@@ -23,6 +23,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
+import com.cobblemon.mod.common.item.interactive.PokerodItem;
 import net.wurstclient.WurstClient;
 import net.wurstclient.hack.Hack;
 import net.wurstclient.settings.CheckboxSetting;
@@ -132,7 +133,14 @@ public final class AutoFishRodSelector
 	
 	private int getRodValue(ItemStack stack)
 	{
-		if(stack.isEmpty() || !(stack.getItem() instanceof FishingRodItem))
+		if(stack.isEmpty())
+			return -1;
+		
+		boolean isRod = stack.getItem() instanceof FishingRodItem
+			|| stack.getItem() instanceof PokerodItem
+			|| stack.getItem().getClass().getName().contains("TideFishingRodItem");
+			
+		if(!isRod)
 			return -1;
 		
 		RegistryAccess drm = MC.level.registryAccess();
@@ -166,7 +174,18 @@ public final class AutoFishRodSelector
 		int noVanishBonus = EnchantmentHelper.has(stack,
 			EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP) ? 0 : 1;
 		
+		int tideBonus = 0;
+		if(stack.getItem().getClass().getName().contains("TideFishingRodItem"))
+		{
+			tideBonus = 100;
+			String id = stack.getItem().toString().toLowerCase();
+			if(id.contains("gold"))
+				tideBonus += 50;
+			if(id.contains("midas"))
+				tideBonus += 100;
+		}
+		
 		return luckOTSLvl * 9 + lureLvl * 9 + unbreakingLvl * 2 + mendingBonus
-			+ noVanishBonus;
+			+ noVanishBonus + tideBonus;
 	}
 }
