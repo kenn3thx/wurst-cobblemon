@@ -72,6 +72,14 @@ public final class AutoMiningHack extends Hack
 			"Seconds to wait before sending the claim packet.", 1.0, 0.0, 5.0,
 			0.1, ValueDisplay.DECIMAL);
 	
+	private final CheckboxSetting instantLootFilter = new CheckboxSetting(
+		"Instant Loot Filter",
+		"Skips claiming unwanted items defined in your Drop Filters.", false);
+	
+	private final CheckboxSetting instantLootAutoNext = new CheckboxSetting(
+		"Instant Loot Auto Next",
+		"Automatically proceeds to the next level if one is available.", false);
+	
 	private final CheckboxSetting continuousDrop =
 		new CheckboxSetting("Continuous Drop",
 			"Automatically drops unwanted items whenever they are picked up.",
@@ -126,6 +134,9 @@ public final class AutoMiningHack extends Hack
 	private Field stoneHealthField;
 	private Field dirtHealthField;
 	private Field hasBedrockField;
+	private Field itemStackField;
+	private Method canStartNextLevelMethod;
+	
 	private Field stabilityRemainingField;
 	private Method hitTileMethod;
 	private Method setToolMethod;
@@ -151,6 +162,8 @@ public final class AutoMiningHack extends Hack
 		setCategory(Category.OTHER);
 		addSetting(instantLoot);
 		addSetting(instantLootDelay);
+		addSetting(instantLootFilter);
+		addSetting(instantLootAutoNext);
 		addSetting(delay);
 		addSetting(stopAtStability);
 		addSetting(minStability);
@@ -797,10 +810,24 @@ public final class AutoMiningHack extends Hack
 			if(treasures == null || treasures.isEmpty())
 				return;
 			
-			// Build ALL indices
+			if(itemStackField == null)
+			{
+				itemStackField =
+					treasures.get(0).getClass().getDeclaredField("itemStack");
+				itemStackField.setAccessible(true);
+			}
+			
+			// Build indices
 			List<Integer> indices = new ArrayList<>();
 			for(int i = 0; i < treasures.size(); i++)
+			{
+				Object treasure = treasures.get(i);
+				ItemStack stack = (ItemStack)itemStackField.get(treasure);
+				if(instantLootFilter.isChecked() && isUnwanted(stack.getItem()))
+					continue;
+				
 				indices.add(i);
+			}
 			
 			// Create ClaimRewardPayload(sessionId, indices)
 			Class<?> payloadClass = Class.forName(
@@ -821,6 +848,45 @@ public final class AutoMiningHack extends Hack
 				{
 					m.invoke(null, payload);
 					break;
+				}
+			}
+			
+			if(instantLootAutoNext.isChecked())
+			{
+				if(canStartNextLevelMethod == null)
+				{
+					canStartNextLevelMethod =
+						grid.getClass().getDeclaredMethod("canStartNextLevel");
+					canStartNextLevelMethod.setAccessible(true);
+				}
+				
+				boolean canStartNextLevel =
+					(boolean)canStartNextLevelMethod.invoke(grid);
+				if(canStartNextLevel)
+				{
+					Class<?> nextLevelClass = Class.forName(
+						"handyfon.pickaxeminigame.Pickaxeminigame$NextLevelRequestPayload");
+					Constructor<?> ctorNext =
+						nextLevelClass.getDeclaredConstructor(int.class);
+					ctorNext.setAccessible(true);
+					Object nextPayload = ctorNext.newInstance(sessionId);
+					
+					for(Method m : cpn.getMethods())
+					{
+						if(m.getName().equals("send")
+							&& m.getParameterCount() == 1
+							&& m.getParameterTypes()[0].isInstance(nextPayload))
+						{
+							m.invoke(null, nextPayload);
+							break;
+						}
+					}
+					
+					// Reset screen to allow it to receive the new grid
+					// naturally
+					screenItemsGivenField.setBoolean(screen, false);
+					lastInstantLootScreen = null; // force delay for next level
+					return;
 				}
 			}
 			
