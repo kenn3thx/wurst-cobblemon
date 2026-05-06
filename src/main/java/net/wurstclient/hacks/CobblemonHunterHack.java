@@ -175,7 +175,7 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 			String name = pokemon.getSpecies().getName().toLowerCase();
 			
 			// 1.1 Wild Only filter (affects both ESP and Targeting)
-			if(filterWildOnly.isChecked() && !pokemon.isWild())
+			if(filterWildOnly.isChecked() && (!pokemon.isWild() || pokemon.getOwnerUUID() != null))
 				return false;
 			
 			// 1.2 Rendering / Selection logic
