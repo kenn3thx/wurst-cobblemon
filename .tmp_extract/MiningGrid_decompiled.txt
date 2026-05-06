@@ -1,0 +1,3833 @@
+﻿Compiled from "MiningGrid.java"
+public class handyfon.pickaxeminigame.MiningGrid {
+  private final float effectiveRarityModifier;
+
+  private final java.lang.String dimensionId;
+
+  private final int blockY;
+
+  private final handyfon.pickaxeminigame.MiningSettingsConfig$EffectiveSettings effectiveSettings;
+
+  public static final int DEFAULT_STONE_LAYER_HEALTH;
+
+  public static final int DEFAULT_DIRT_LAYER_HEALTH;
+
+  public static final float DEFAULT_BEDROCK_CHANCE;
+
+  private final int stoneLayerHealth;
+
+  private final int dirtLayerHealth;
+
+  private final float bedrockChance;
+
+  private final float baseStabilityMultiplier;
+
+  public static final int BEDROCK_STABILITY_PENALTY;
+
+  private int width;
+
+  private int height;
+
+  private int[][] stoneHealth;
+
+  private int[][] dirtHealth;
+
+  private net.minecraft.class_1792[][] hiddenItems;
+
+  private boolean[][] hasBedrock;
+
+  private final handyfon.pickaxeminigame.MiningType type;
+
+  private java.lang.String hardTextureIdOverride;
+
+  private java.lang.String softTextureIdOverride;
+
+  private java.lang.String backgroundTextureIdOverride;
+
+  private int maxPrimaryHealthOverride;
+
+  private int maxSecondaryHealthOverride;
+
+  private final java.util.Set<handyfon.pickaxeminigame.MiningGrid$HiddenTreasure> collectedTreasures;
+
+  private final java.util.List<handyfon.pickaxeminigame.MiningGrid$HiddenTreasure> treasures;
+
+  private final java.util.List<net.minecraft.class_1799> collectedItemStacks;
+
+  private final java.util.Random random;
+
+  private int stabilityRemaining;
+
+  private int maxStability;
+
+  private boolean gameOver;
+
+  private boolean won;
+
+  private handyfon.pickaxeminigame.MiningGrid$Tool currentTool;
+
+  private handyfon.pickaxeminigame.MiningGrid$GridSize currentGridSize;
+
+  private boolean isSuperStable;
+
+  private int currentLevel;
+
+  private int maxNextLevelsOverride;
+
+  private boolean isTimeLimited;
+
+  private int timeLimitSeconds;
+
+  private boolean isDeep;
+
+  private int extraDirtLayers;
+
+  private boolean useOnlyBlockSpecificLoot;
+
+  private java.util.List<handyfon.pickaxeminigame.MiningBlockConfig$BlockTreasureEntry> blockSpecificTreasures;
+
+  private handyfon.pickaxeminigame.MiningGrid$GridSize forcedGridSize;
+
+  private java.lang.Boolean forcedSuperStable;
+
+  public handyfon.pickaxeminigame.MiningGrid$HitFeedback lastHitFeedback;
+
+  public handyfon.pickaxeminigame.MiningGrid(handyfon.pickaxeminigame.MiningType, net.minecraft.class_2338);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aconst_null
+       4: aconst_null
+       5: aconst_null
+       6: invokespecial #112                // Method "<init>":(Lhandyfon/pickaxeminigame/MiningType;Lnet/minecraft/class_2338;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;)V
+       9: return
+
+  public handyfon.pickaxeminigame.MiningGrid(handyfon.pickaxeminigame.MiningType, net.minecraft.class_2338, java.lang.String, java.lang.Boolean);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: aload_3
+       4: aload         4
+       6: aconst_null
+       7: invokespecial #112                // Method "<init>":(Lhandyfon/pickaxeminigame/MiningType;Lnet/minecraft/class_2338;Ljava/lang/String;Ljava/lang/Boolean;Ljava/lang/String;)V
+      10: return
+
+  public handyfon.pickaxeminigame.MiningGrid(handyfon.pickaxeminigame.MiningType, net.minecraft.class_2338, java.lang.String, java.lang.Boolean, java.lang.String);
+    Code:
+       0: aload_0
+       1: invokespecial #122                // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_m1
+       6: putfield      #124                // Field maxPrimaryHealthOverride:I
+       9: aload_0
+      10: iconst_m1
+      11: putfield      #126                // Field maxSecondaryHealthOverride:I
+      14: aload_0
+      15: new           #128                // class java/util/HashSet
+      18: dup
+      19: invokespecial #129                // Method java/util/HashSet."<init>":()V
+      22: putfield      #131                // Field collectedTreasures:Ljava/util/Set;
+      25: aload_0
+      26: new           #133                // class java/util/ArrayList
+      29: dup
+      30: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+      33: putfield      #136                // Field treasures:Ljava/util/List;
+      36: aload_0
+      37: new           #133                // class java/util/ArrayList
+      40: dup
+      41: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+      44: putfield      #138                // Field collectedItemStacks:Ljava/util/List;
+      47: aload_0
+      48: new           #140                // class java/util/Random
+      51: dup
+      52: invokespecial #141                // Method java/util/Random."<init>":()V
+      55: putfield      #143                // Field random:Ljava/util/Random;
+      58: aload_0
+      59: getstatic     #146                // Field handyfon/pickaxeminigame/MiningGrid$Tool.STONE_PICKAXE:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      62: putfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      65: aload_0
+      66: getstatic     #151                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.NORMAL:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      69: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      72: aload_0
+      73: iconst_0
+      74: putfield      #155                // Field isSuperStable:Z
+      77: aload_0
+      78: iconst_0
+      79: putfield      #157                // Field currentLevel:I
+      82: aload_0
+      83: iconst_m1
+      84: putfield      #159                // Field maxNextLevelsOverride:I
+      87: aload_0
+      88: iconst_0
+      89: putfield      #161                // Field isTimeLimited:Z
+      92: aload_0
+      93: iconst_0
+      94: putfield      #163                // Field timeLimitSeconds:I
+      97: aload_0
+      98: iconst_0
+      99: putfield      #165                // Field isDeep:Z
+     102: aload_0
+     103: iconst_0
+     104: putfield      #167                // Field extraDirtLayers:I
+     107: aload_0
+     108: iconst_0
+     109: putfield      #169                // Field useOnlyBlockSpecificLoot:Z
+     112: aload_0
+     113: new           #133                // class java/util/ArrayList
+     116: dup
+     117: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+     120: putfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     123: aload_0
+     124: aconst_null
+     125: putfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     128: aload_0
+     129: aconst_null
+     130: putfield      #175                // Field forcedSuperStable:Ljava/lang/Boolean;
+     133: aload_0
+     134: getstatic     #178                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.NONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     137: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     140: aload_0
+     141: aload_1
+     142: putfield      #182                // Field type:Lhandyfon/pickaxeminigame/MiningType;
+     145: aload_0
+     146: aload_2
+     147: invokevirtual #188                // Method net/minecraft/class_2338.method_10264:()I
+     150: putfield      #190                // Field blockY:I
+     153: aload_0
+     154: aload         5
+     156: putfield      #192                // Field dimensionId:Ljava/lang/String;
+     159: aload_0
+     160: getstatic     #198                // Field handyfon/pickaxeminigame/Pickaxeminigame.SETTINGS:Lhandyfon/pickaxeminigame/MiningSettingsConfig;
+     163: aload         5
+     165: invokevirtual #202                // Method handyfon/pickaxeminigame/MiningSettingsConfig.getEffective:(Ljava/lang/String;)Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     168: putfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     171: aload_0
+     172: aload_0
+     173: aload_1
+     174: aload_2
+     175: invokevirtual #208                // Method calculateEffectiveModifier:(Lhandyfon/pickaxeminigame/MiningType;Lnet/minecraft/class_2338;)F
+     178: putfield      #210                // Field effectiveRarityModifier:F
+     181: aload_0
+     182: aload_1
+     183: invokevirtual #215                // Method handyfon/pickaxeminigame/MiningType.getPrimaryHealth:()I
+     186: putfield      #217                // Field stoneLayerHealth:I
+     189: aload_0
+     190: aload_1
+     191: invokevirtual #220                // Method handyfon/pickaxeminigame/MiningType.getSecondaryHealth:()I
+     194: putfield      #222                // Field dirtLayerHealth:I
+     197: aload_0
+     198: aload_1
+     199: invokevirtual #226                // Method handyfon/pickaxeminigame/MiningType.getBedrockChance:()F
+     202: putfield      #228                // Field bedrockChance:F
+     205: aload_0
+     206: aload_1
+     207: invokevirtual #231                // Method handyfon/pickaxeminigame/MiningType.getBaseStability:()F
+     210: putfield      #233                // Field baseStabilityMultiplier:F
+     213: aload_0
+     214: aload_1
+     215: invokevirtual #237                // Method handyfon/pickaxeminigame/MiningType.usesOnlyBlockSpecificLoot:()Z
+     218: putfield      #169                // Field useOnlyBlockSpecificLoot:Z
+     221: aload_0
+     222: new           #133                // class java/util/ArrayList
+     225: dup
+     226: aload_1
+     227: invokevirtual #241                // Method handyfon/pickaxeminigame/MiningType.getBlockSpecificTreasures:()Ljava/util/List;
+     230: invokespecial #244                // Method java/util/ArrayList."<init>":(Ljava/util/Collection;)V
+     233: putfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     236: aload_3
+     237: ifnull        263
+     240: aload_3
+     241: invokevirtual #249                // Method java/lang/String.isEmpty:()Z
+     244: ifne          263
+     247: aload_0
+     248: aload_3
+     249: invokevirtual #253                // Method java/lang/String.toUpperCase:()Ljava/lang/String;
+     252: invokestatic  #257                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.valueOf:(Ljava/lang/String;)Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     255: putfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     258: goto          263
+     261: astore        6
+     263: aload_0
+     264: aload         4
+     266: putfield      #175                // Field forcedSuperStable:Ljava/lang/Boolean;
+     269: aload_0
+     270: invokevirtual #262                // Method initNewGame:()V
+     273: return
+    Exception table:
+       from    to  target type
+         247   258   261   Class java/lang/IllegalArgumentException
+
+  public handyfon.pickaxeminigame.MiningGrid(handyfon.pickaxeminigame.MiningType, int, int, int[][], int[][], boolean[][], int, int, handyfon.pickaxeminigame.MiningGrid$GridSize, boolean, int, int, java.util.List<handyfon.pickaxeminigame.MiningGrid$HiddenTreasure>, boolean, float, float, float, boolean, boolean, boolean, boolean, int, int, boolean, boolean, int, boolean, int, float, float, java.lang.String, java.lang.String, java.lang.String, int, int);
+    Code:
+       0: aload_0
+       1: invokespecial #122                // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_m1
+       6: putfield      #124                // Field maxPrimaryHealthOverride:I
+       9: aload_0
+      10: iconst_m1
+      11: putfield      #126                // Field maxSecondaryHealthOverride:I
+      14: aload_0
+      15: new           #128                // class java/util/HashSet
+      18: dup
+      19: invokespecial #129                // Method java/util/HashSet."<init>":()V
+      22: putfield      #131                // Field collectedTreasures:Ljava/util/Set;
+      25: aload_0
+      26: new           #133                // class java/util/ArrayList
+      29: dup
+      30: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+      33: putfield      #136                // Field treasures:Ljava/util/List;
+      36: aload_0
+      37: new           #133                // class java/util/ArrayList
+      40: dup
+      41: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+      44: putfield      #138                // Field collectedItemStacks:Ljava/util/List;
+      47: aload_0
+      48: new           #140                // class java/util/Random
+      51: dup
+      52: invokespecial #141                // Method java/util/Random."<init>":()V
+      55: putfield      #143                // Field random:Ljava/util/Random;
+      58: aload_0
+      59: getstatic     #146                // Field handyfon/pickaxeminigame/MiningGrid$Tool.STONE_PICKAXE:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      62: putfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      65: aload_0
+      66: getstatic     #151                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.NORMAL:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      69: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      72: aload_0
+      73: iconst_0
+      74: putfield      #155                // Field isSuperStable:Z
+      77: aload_0
+      78: iconst_0
+      79: putfield      #157                // Field currentLevel:I
+      82: aload_0
+      83: iconst_m1
+      84: putfield      #159                // Field maxNextLevelsOverride:I
+      87: aload_0
+      88: iconst_0
+      89: putfield      #161                // Field isTimeLimited:Z
+      92: aload_0
+      93: iconst_0
+      94: putfield      #163                // Field timeLimitSeconds:I
+      97: aload_0
+      98: iconst_0
+      99: putfield      #165                // Field isDeep:Z
+     102: aload_0
+     103: iconst_0
+     104: putfield      #167                // Field extraDirtLayers:I
+     107: aload_0
+     108: iconst_0
+     109: putfield      #169                // Field useOnlyBlockSpecificLoot:Z
+     112: aload_0
+     113: new           #133                // class java/util/ArrayList
+     116: dup
+     117: invokespecial #134                // Method java/util/ArrayList."<init>":()V
+     120: putfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     123: aload_0
+     124: aconst_null
+     125: putfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     128: aload_0
+     129: aconst_null
+     130: putfield      #175                // Field forcedSuperStable:Ljava/lang/Boolean;
+     133: aload_0
+     134: getstatic     #178                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.NONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     137: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     140: aload_0
+     141: aload_1
+     142: putfield      #182                // Field type:Lhandyfon/pickaxeminigame/MiningType;
+     145: aload_0
+     146: iload_2
+     147: putfield      #286                // Field width:I
+     150: aload_0
+     151: iload_3
+     152: putfield      #288                // Field height:I
+     155: aload_0
+     156: aload         4
+     158: putfield      #290                // Field stoneHealth:[[I
+     161: aload_0
+     162: aload         5
+     164: putfield      #292                // Field dirtHealth:[[I
+     167: aload_0
+     168: aload         6
+     170: putfield      #294                // Field hasBedrock:[[Z
+     173: aload_0
+     174: iload         7
+     176: putfield      #296                // Field stabilityRemaining:I
+     179: aload_0
+     180: iload         8
+     182: putfield      #298                // Field maxStability:I
+     185: aload_0
+     186: aload         9
+     188: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     191: aload_0
+     192: iload         10
+     194: putfield      #155                // Field isSuperStable:Z
+     197: aload_0
+     198: iload         11
+     200: putfield      #157                // Field currentLevel:I
+     203: aload_0
+     204: iload         12
+     206: putfield      #159                // Field maxNextLevelsOverride:I
+     209: aload_0
+     210: getfield      #136                // Field treasures:Ljava/util/List;
+     213: aload         13
+     215: invokeinterface #304,  2          // InterfaceMethod java/util/List.addAll:(Ljava/util/Collection;)Z
+     220: pop
+     221: aload_0
+     222: iload_3
+     223: iload_2
+     224: multianewarray #305,  2           // class "[[Lnet/minecraft/class_1792;"
+     228: putfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     231: aload         13
+     233: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     238: astore        36
+     240: aload         36
+     242: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     247: ifeq          330
+     250: aload         36
+     252: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     257: checkcast     #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+     260: astore        37
+     262: iconst_0
+     263: istore        38
+     265: iload         38
+     267: aload         37
+     269: getfield      #323                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.height:I
+     272: if_icmpge     327
+     275: iconst_0
+     276: istore        39
+     278: iload         39
+     280: aload         37
+     282: getfield      #324                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.width:I
+     285: if_icmpge     321
+     288: aload_0
+     289: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     292: aload         37
+     294: getfield      #327                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.y:I
+     297: iload         38
+     299: iadd
+     300: aaload
+     301: aload         37
+     303: getfield      #330                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.x:I
+     306: iload         39
+     308: iadd
+     309: aload         37
+     311: getfield      #334                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.item:Lnet/minecraft/class_1792;
+     314: aastore
+     315: iinc          39, 1
+     318: goto          278
+     321: iinc          38, 1
+     324: goto          265
+     327: goto          240
+     330: aload_0
+     331: new           #18                 // class handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings
+     334: dup
+     335: invokespecial #335                // Method handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings."<init>":()V
+     338: putfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     341: aload_0
+     342: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     345: iload         14
+     347: putfield      #337                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.debugMode:Z
+     350: aload_0
+     351: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     354: fload         15
+     356: putfield      #339                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.layerClearRarityBonus:F
+     359: aload_0
+     360: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     363: fload         16
+     365: putfield      #341                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.baseRarityMultiplier:F
+     368: aload         9
+     370: invokevirtual #344                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.ordinal:()I
+     373: tableswitch   { // 1 to 3
+
+                     1: 424
+
+                     2: 412
+
+                     3: 400
+               default: 436
+          }
+     400: aload_0
+     401: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     404: fload         17
+     406: putfield      #347                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.hugeGridRarityBonus:F
+     409: goto          436
+     412: aload_0
+     413: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     416: fload         17
+     418: putfield      #350                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.veryLargeGridRarityBonus:F
+     421: goto          436
+     424: aload_0
+     425: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     428: fload         17
+     430: putfield      #353                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.largeGridRarityBonus:F
+     433: goto          436
+     436: aload_0
+     437: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     440: iload         18
+     442: putfield      #355                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.enableBrush:Z
+     445: aload_0
+     446: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     449: iload         19
+     451: putfield      #357                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.enableTnt:Z
+     454: aload_0
+     455: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     458: iload         20
+     460: putfield      #359                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.requiresTntFromInventory:Z
+     463: aload_0
+     464: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     467: iload         21
+     469: putfield      #361                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.requiresBrushItem:Z
+     472: aload_0
+     473: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     476: iload         22
+     478: putfield      #363                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.brushStabilityCost:I
+     481: aload_0
+     482: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     485: iload         23
+     487: putfield      #365                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.tntStabilityCost:I
+     490: aload_0
+     491: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     494: iload         24
+     496: putfield      #367                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.requireToolAchievements:Z
+     499: aload_0
+     500: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     503: fload         29
+     505: putfield      #369                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedRarityBonus:F
+     508: aload_0
+     509: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     512: fload         30
+     514: putfield      #371                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridRarityBonus:F
+     517: aload_0
+     518: iload         25
+     520: putfield      #161                // Field isTimeLimited:Z
+     523: aload_0
+     524: iload         26
+     526: putfield      #163                // Field timeLimitSeconds:I
+     529: aload_0
+     530: iload         27
+     532: putfield      #165                // Field isDeep:Z
+     535: aload_0
+     536: iload         28
+     538: putfield      #167                // Field extraDirtLayers:I
+     541: aload_0
+     542: fconst_1
+     543: putfield      #210                // Field effectiveRarityModifier:F
+     546: aload_0
+     547: aconst_null
+     548: putfield      #192                // Field dimensionId:Ljava/lang/String;
+     551: aload_0
+     552: iconst_0
+     553: putfield      #190                // Field blockY:I
+     556: aload_0
+     557: iconst_0
+     558: putfield      #373                // Field gameOver:Z
+     561: aload_0
+     562: iconst_0
+     563: putfield      #375                // Field won:Z
+     566: aload_0
+     567: iconst_3
+     568: putfield      #217                // Field stoneLayerHealth:I
+     571: aload_0
+     572: iconst_2
+     573: putfield      #222                // Field dirtLayerHealth:I
+     576: aload_0
+     577: ldc           #51                 // float 0.15f
+     579: putfield      #228                // Field bedrockChance:F
+     582: aload_0
+     583: fconst_1
+     584: putfield      #233                // Field baseStabilityMultiplier:F
+     587: aload_0
+     588: aload         31
+     590: putfield      #377                // Field hardTextureIdOverride:Ljava/lang/String;
+     593: aload_0
+     594: aload         32
+     596: putfield      #379                // Field softTextureIdOverride:Ljava/lang/String;
+     599: aload_0
+     600: aload         33
+     602: putfield      #381                // Field backgroundTextureIdOverride:Ljava/lang/String;
+     605: aload_0
+     606: iload         34
+     608: putfield      #124                // Field maxPrimaryHealthOverride:I
+     611: aload_0
+     612: iload         35
+     614: putfield      #126                // Field maxSecondaryHealthOverride:I
+     617: return
+
+  public net.minecraft.class_2960 getHardTexture();
+    Code:
+       0: aload_0
+       1: getfield      #377                // Field hardTextureIdOverride:Ljava/lang/String;
+       4: ifnull        25
+       7: aload_0
+       8: getfield      #377                // Field hardTextureIdOverride:Ljava/lang/String;
+      11: invokevirtual #249                // Method java/lang/String.isEmpty:()Z
+      14: ifne          25
+      17: aload_0
+      18: getfield      #377                // Field hardTextureIdOverride:Ljava/lang/String;
+      21: invokestatic  #393                // Method net/minecraft/class_2960.method_60654:(Ljava/lang/String;)Lnet/minecraft/class_2960;
+      24: areturn
+      25: aload_0
+      26: getfield      #182                // Field type:Lhandyfon/pickaxeminigame/MiningType;
+      29: invokevirtual #395                // Method handyfon/pickaxeminigame/MiningType.getHardTexture:()Lnet/minecraft/class_2960;
+      32: areturn
+
+  public net.minecraft.class_2960 getSoftTexture();
+    Code:
+       0: aload_0
+       1: getfield      #379                // Field softTextureIdOverride:Ljava/lang/String;
+       4: ifnull        25
+       7: aload_0
+       8: getfield      #379                // Field softTextureIdOverride:Ljava/lang/String;
+      11: invokevirtual #249                // Method java/lang/String.isEmpty:()Z
+      14: ifne          25
+      17: aload_0
+      18: getfield      #379                // Field softTextureIdOverride:Ljava/lang/String;
+      21: invokestatic  #393                // Method net/minecraft/class_2960.method_60654:(Ljava/lang/String;)Lnet/minecraft/class_2960;
+      24: areturn
+      25: aload_0
+      26: getfield      #182                // Field type:Lhandyfon/pickaxeminigame/MiningType;
+      29: invokevirtual #398                // Method handyfon/pickaxeminigame/MiningType.getSoftTexture:()Lnet/minecraft/class_2960;
+      32: areturn
+
+  public net.minecraft.class_2960 getBackgroundTexture();
+    Code:
+       0: aload_0
+       1: getfield      #381                // Field backgroundTextureIdOverride:Ljava/lang/String;
+       4: ifnull        25
+       7: aload_0
+       8: getfield      #381                // Field backgroundTextureIdOverride:Ljava/lang/String;
+      11: invokevirtual #249                // Method java/lang/String.isEmpty:()Z
+      14: ifne          25
+      17: aload_0
+      18: getfield      #381                // Field backgroundTextureIdOverride:Ljava/lang/String;
+      21: invokestatic  #393                // Method net/minecraft/class_2960.method_60654:(Ljava/lang/String;)Lnet/minecraft/class_2960;
+      24: areturn
+      25: aload_0
+      26: getfield      #182                // Field type:Lhandyfon/pickaxeminigame/MiningType;
+      29: invokevirtual #401                // Method handyfon/pickaxeminigame/MiningType.getBackgroundTexture:()Lnet/minecraft/class_2960;
+      32: areturn
+
+  public int getMaxPrimaryHealth();
+    Code:
+       0: aload_0
+       1: getfield      #124                // Field maxPrimaryHealthOverride:I
+       4: ifle          12
+       7: aload_0
+       8: getfield      #124                // Field maxPrimaryHealthOverride:I
+      11: ireturn
+      12: aload_0
+      13: getfield      #217                // Field stoneLayerHealth:I
+      16: ireturn
+
+  public int getMaxSecondaryHealth();
+    Code:
+       0: aload_0
+       1: getfield      #126                // Field maxSecondaryHealthOverride:I
+       4: ifle          15
+       7: aload_0
+       8: getfield      #126                // Field maxSecondaryHealthOverride:I
+      11: istore_1
+      12: goto          20
+      15: aload_0
+      16: getfield      #222                // Field dirtLayerHealth:I
+      19: istore_1
+      20: aload_0
+      21: getfield      #165                // Field isDeep:Z
+      24: ifeq          43
+      27: aload_0
+      28: getfield      #167                // Field extraDirtLayers:I
+      31: ifle          43
+      34: iload_1
+      35: iconst_1
+      36: aload_0
+      37: getfield      #167                // Field extraDirtLayers:I
+      40: iadd
+      41: imul
+      42: ireturn
+      43: iload_1
+      44: ireturn
+
+  public void initNewGame();
+    Code:
+       0: aload_0
+       1: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+       4: astore_1
+       5: aload_0
+       6: getfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+       9: ifnull        184
+      12: aload_0
+      13: aload_0
+      14: getfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      17: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      20: aload_0
+      21: getfield      #173                // Field forcedGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      24: invokevirtual #344                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.ordinal:()I
+      27: tableswitch   { // 1 to 3
+
+                     1: 118
+
+                     2: 85
+
+                     3: 52
+               default: 151
+          }
+      52: aload_0
+      53: bipush        20
+      55: aload_0
+      56: getfield      #143                // Field random:Ljava/util/Random;
+      59: iconst_3
+      60: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      63: iadd
+      64: putfield      #286                // Field width:I
+      67: aload_0
+      68: bipush        13
+      70: aload_0
+      71: getfield      #143                // Field random:Ljava/util/Random;
+      74: iconst_2
+      75: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      78: iadd
+      79: putfield      #288                // Field height:I
+      82: goto          391
+      85: aload_0
+      86: bipush        17
+      88: aload_0
+      89: getfield      #143                // Field random:Ljava/util/Random;
+      92: iconst_3
+      93: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      96: iadd
+      97: putfield      #286                // Field width:I
+     100: aload_0
+     101: bipush        11
+     103: aload_0
+     104: getfield      #143                // Field random:Ljava/util/Random;
+     107: iconst_2
+     108: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     111: iadd
+     112: putfield      #288                // Field height:I
+     115: goto          391
+     118: aload_0
+     119: bipush        14
+     121: aload_0
+     122: getfield      #143                // Field random:Ljava/util/Random;
+     125: iconst_3
+     126: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     129: iadd
+     130: putfield      #286                // Field width:I
+     133: aload_0
+     134: bipush        9
+     136: aload_0
+     137: getfield      #143                // Field random:Ljava/util/Random;
+     140: iconst_2
+     141: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     144: iadd
+     145: putfield      #288                // Field height:I
+     148: goto          391
+     151: aload_0
+     152: bipush        10
+     154: aload_0
+     155: getfield      #143                // Field random:Ljava/util/Random;
+     158: iconst_4
+     159: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     162: iadd
+     163: putfield      #286                // Field width:I
+     166: aload_0
+     167: bipush        6
+     169: aload_0
+     170: getfield      #143                // Field random:Ljava/util/Random;
+     173: iconst_3
+     174: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     177: iadd
+     178: putfield      #288                // Field height:I
+     181: goto          391
+     184: aload_0
+     185: getfield      #143                // Field random:Ljava/util/Random;
+     188: invokevirtual #411                // Method java/util/Random.nextFloat:()F
+     191: fstore_2
+     192: aload_1
+     193: getfield      #414                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.hugeGridChance:F
+     196: fstore_3
+     197: fload_3
+     198: aload_1
+     199: getfield      #417                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.veryLargeGridChance:F
+     202: fadd
+     203: fstore        4
+     205: fload         4
+     207: aload_1
+     208: getfield      #420                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.largeGridChance:F
+     211: fadd
+     212: fstore        5
+     214: fload_2
+     215: fload_3
+     216: fcmpg
+     217: ifge          260
+     220: aload_0
+     221: getstatic     #423                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.HUGE:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     224: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     227: aload_0
+     228: bipush        20
+     230: aload_0
+     231: getfield      #143                // Field random:Ljava/util/Random;
+     234: iconst_3
+     235: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     238: iadd
+     239: putfield      #286                // Field width:I
+     242: aload_0
+     243: bipush        13
+     245: aload_0
+     246: getfield      #143                // Field random:Ljava/util/Random;
+     249: iconst_2
+     250: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     253: iadd
+     254: putfield      #288                // Field height:I
+     257: goto          391
+     260: fload_2
+     261: fload         4
+     263: fcmpg
+     264: ifge          307
+     267: aload_0
+     268: getstatic     #426                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.VERY_LARGE:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     271: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     274: aload_0
+     275: bipush        17
+     277: aload_0
+     278: getfield      #143                // Field random:Ljava/util/Random;
+     281: iconst_3
+     282: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     285: iadd
+     286: putfield      #286                // Field width:I
+     289: aload_0
+     290: bipush        11
+     292: aload_0
+     293: getfield      #143                // Field random:Ljava/util/Random;
+     296: iconst_2
+     297: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     300: iadd
+     301: putfield      #288                // Field height:I
+     304: goto          391
+     307: fload_2
+     308: fload         5
+     310: fcmpg
+     311: ifge          354
+     314: aload_0
+     315: getstatic     #429                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.LARGE:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     318: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     321: aload_0
+     322: bipush        14
+     324: aload_0
+     325: getfield      #143                // Field random:Ljava/util/Random;
+     328: iconst_3
+     329: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     332: iadd
+     333: putfield      #286                // Field width:I
+     336: aload_0
+     337: bipush        9
+     339: aload_0
+     340: getfield      #143                // Field random:Ljava/util/Random;
+     343: iconst_2
+     344: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     347: iadd
+     348: putfield      #288                // Field height:I
+     351: goto          391
+     354: aload_0
+     355: getstatic     #151                // Field handyfon/pickaxeminigame/MiningGrid$GridSize.NORMAL:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     358: putfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     361: aload_0
+     362: bipush        10
+     364: aload_0
+     365: getfield      #143                // Field random:Ljava/util/Random;
+     368: iconst_4
+     369: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     372: iadd
+     373: putfield      #286                // Field width:I
+     376: aload_0
+     377: bipush        6
+     379: aload_0
+     380: getfield      #143                // Field random:Ljava/util/Random;
+     383: iconst_3
+     384: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     387: iadd
+     388: putfield      #288                // Field height:I
+     391: aload_0
+     392: getfield      #175                // Field forcedSuperStable:Ljava/lang/Boolean;
+     395: ifnull        412
+     398: aload_0
+     399: aload_0
+     400: getfield      #175                // Field forcedSuperStable:Ljava/lang/Boolean;
+     403: invokevirtual #432                // Method java/lang/Boolean.booleanValue:()Z
+     406: putfield      #155                // Field isSuperStable:Z
+     409: goto          436
+     412: aload_0
+     413: aload_0
+     414: getfield      #143                // Field random:Ljava/util/Random;
+     417: invokevirtual #411                // Method java/util/Random.nextFloat:()F
+     420: aload_1
+     421: getfield      #435                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.superStableChance:F
+     424: fcmpg
+     425: ifge          432
+     428: iconst_1
+     429: goto          433
+     432: iconst_0
+     433: putfield      #155                // Field isSuperStable:Z
+     436: aload_0
+     437: aload_0
+     438: getfield      #143                // Field random:Ljava/util/Random;
+     441: invokevirtual #411                // Method java/util/Random.nextFloat:()F
+     444: aload_1
+     445: getfield      #438                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedChance:F
+     448: fcmpg
+     449: ifge          456
+     452: iconst_1
+     453: goto          457
+     456: iconst_0
+     457: putfield      #161                // Field isTimeLimited:Z
+     460: aload_0
+     461: getfield      #161                // Field isTimeLimited:Z
+     464: ifeq          507
+     467: aload_1
+     468: getfield      #441                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedMaxTime:I
+     471: aload_1
+     472: getfield      #444                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedMinTime:I
+     475: isub
+     476: istore_2
+     477: aload_0
+     478: aload_1
+     479: getfield      #444                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedMinTime:I
+     482: iload_2
+     483: ifle          499
+     486: aload_0
+     487: getfield      #143                // Field random:Ljava/util/Random;
+     490: iload_2
+     491: iconst_1
+     492: iadd
+     493: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     496: goto          500
+     499: iconst_0
+     500: iadd
+     501: putfield      #163                // Field timeLimitSeconds:I
+     504: goto          512
+     507: aload_0
+     508: iconst_0
+     509: putfield      #163                // Field timeLimitSeconds:I
+     512: aload_0
+     513: aload_0
+     514: getfield      #143                // Field random:Ljava/util/Random;
+     517: invokevirtual #411                // Method java/util/Random.nextFloat:()F
+     520: aload_1
+     521: getfield      #447                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridChance:F
+     524: fcmpg
+     525: ifge          532
+     528: iconst_1
+     529: goto          533
+     532: iconst_0
+     533: putfield      #165                // Field isDeep:Z
+     536: aload_0
+     537: getfield      #165                // Field isDeep:Z
+     540: ifeq          583
+     543: aload_1
+     544: getfield      #450                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridMaxExtraLayers:I
+     547: aload_1
+     548: getfield      #453                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridMinExtraLayers:I
+     551: isub
+     552: istore_2
+     553: aload_0
+     554: aload_1
+     555: getfield      #453                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridMinExtraLayers:I
+     558: iload_2
+     559: ifle          575
+     562: aload_0
+     563: getfield      #143                // Field random:Ljava/util/Random;
+     566: iload_2
+     567: iconst_1
+     568: iadd
+     569: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     572: goto          576
+     575: iconst_0
+     576: iadd
+     577: putfield      #167                // Field extraDirtLayers:I
+     580: goto          588
+     583: aload_0
+     584: iconst_0
+     585: putfield      #167                // Field extraDirtLayers:I
+     588: aload_1
+     589: getfield      #456                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.stabilityMultiplier:F
+     592: fstore_2
+     593: bipush        60
+     595: aload_0
+     596: getfield      #143                // Field random:Ljava/util/Random;
+     599: bipush        25
+     601: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     604: iadd
+     605: istore_3
+     606: aload_0
+     607: getfield      #286                // Field width:I
+     610: aload_0
+     611: getfield      #288                // Field height:I
+     614: imul
+     615: i2f
+     616: ldc_w         #457                // float 80.0f
+     619: fdiv
+     620: fstore        4
+     622: iload_3
+     623: i2f
+     624: fconst_1
+     625: fload         4
+     627: invokestatic  #463                // Method java/lang/Math.max:(FF)F
+     630: fmul
+     631: f2i
+     632: istore_3
+     633: aload_0
+     634: getfield      #155                // Field isSuperStable:Z
+     637: ifeq          649
+     640: iload_3
+     641: i2f
+     642: aload_1
+     643: getfield      #466                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.superStableBonus:F
+     646: fmul
+     647: f2i
+     648: istore_3
+     649: aload_0
+     650: getfield      #165                // Field isDeep:Z
+     653: ifeq          671
+     656: iload_3
+     657: i2f
+     658: fconst_1
+     659: aload_0
+     660: getfield      #167                // Field extraDirtLayers:I
+     663: i2f
+     664: ldc           #51                 // float 0.15f
+     666: fmul
+     667: fadd
+     668: fmul
+     669: f2i
+     670: istore_3
+     671: aload_0
+     672: iload_3
+     673: i2f
+     674: fload_2
+     675: fmul
+     676: aload_0
+     677: getfield      #233                // Field baseStabilityMultiplier:F
+     680: fmul
+     681: f2i
+     682: putfield      #298                // Field maxStability:I
+     685: aload_0
+     686: aload_0
+     687: getfield      #298                // Field maxStability:I
+     690: putfield      #296                // Field stabilityRemaining:I
+     693: aload_0
+     694: invokevirtual #469                // Method generateLevel:()V
+     697: return
+
+  public void startNextLevel();
+    Code:
+       0: aload_0
+       1: dup
+       2: getfield      #157                // Field currentLevel:I
+       5: iconst_1
+       6: iadd
+       7: putfield      #157                // Field currentLevel:I
+      10: aload_0
+      11: aload_0
+      12: getfield      #298                // Field maxStability:I
+      15: aload_0
+      16: getfield      #296                // Field stabilityRemaining:I
+      19: bipush        45
+      21: iadd
+      22: invokestatic  #483                // Method java/lang/Math.min:(II)I
+      25: putfield      #296                // Field stabilityRemaining:I
+      28: aload_0
+      29: invokevirtual #469                // Method generateLevel:()V
+      32: return
+
+  public int getCurrentLevel();
+    Code:
+       0: aload_0
+       1: getfield      #157                // Field currentLevel:I
+       4: ireturn
+
+  public int getMaxNextLevels();
+    Code:
+       0: aload_0
+       1: getfield      #159                // Field maxNextLevelsOverride:I
+       4: iflt          12
+       7: aload_0
+       8: getfield      #159                // Field maxNextLevelsOverride:I
+      11: ireturn
+      12: aload_0
+      13: getfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      16: invokevirtual #344                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.ordinal:()I
+      19: tableswitch   { // 1 to 3
+
+                     1: 64
+
+                     2: 54
+
+                     3: 44
+               default: 74
+          }
+      44: aload_0
+      45: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      48: getfield      #488                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.maxNextLevelHuge:I
+      51: goto          81
+      54: aload_0
+      55: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      58: getfield      #491                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.maxNextLevelVeryLarge:I
+      61: goto          81
+      64: aload_0
+      65: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      68: getfield      #494                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.maxNextLevelLarge:I
+      71: goto          81
+      74: aload_0
+      75: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      78: getfield      #497                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.maxNextLevelNormal:I
+      81: ireturn
+
+  public boolean canStartNextLevel();
+    Code:
+       0: aload_0
+       1: getfield      #157                // Field currentLevel:I
+       4: aload_0
+       5: invokevirtual #500                // Method getMaxNextLevels:()I
+       8: if_icmpge     15
+      11: iconst_1
+      12: goto          16
+      15: iconst_0
+      16: ireturn
+
+  public int getTotalTreasureCount();
+    Code:
+       0: aload_0
+       1: getfield      #136                // Field treasures:Ljava/util/List;
+       4: invokeinterface #504,  1          // InterfaceMethod java/util/List.size:()I
+       9: ireturn
+
+  public int getFoundTreasureCount();
+    Code:
+       0: aload_0
+       1: getfield      #131                // Field collectedTreasures:Ljava/util/Set;
+       4: invokeinterface #508,  1          // InterfaceMethod java/util/Set.size:()I
+       9: ireturn
+
+  public boolean isTimeLimited();
+    Code:
+       0: aload_0
+       1: getfield      #161                // Field isTimeLimited:Z
+       4: ireturn
+
+  public int getTimeLimitSeconds();
+    Code:
+       0: aload_0
+       1: getfield      #163                // Field timeLimitSeconds:I
+       4: ireturn
+
+  public boolean isDeep();
+    Code:
+       0: aload_0
+       1: getfield      #165                // Field isDeep:Z
+       4: ireturn
+
+  public int getExtraDirtLayers();
+    Code:
+       0: aload_0
+       1: getfield      #167                // Field extraDirtLayers:I
+       4: ireturn
+
+  public float getSpecialGridRarityBonus();
+    Code:
+       0: fconst_1
+       1: fstore_1
+       2: aload_0
+       3: getfield      #161                // Field isTimeLimited:Z
+       6: ifeq          19
+       9: fload_1
+      10: aload_0
+      11: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      14: getfield      #369                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.timeLimitedRarityBonus:F
+      17: fmul
+      18: fstore_1
+      19: aload_0
+      20: getfield      #165                // Field isDeep:Z
+      23: ifeq          36
+      26: fload_1
+      27: aload_0
+      28: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      31: getfield      #371                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.deepGridRarityBonus:F
+      34: fmul
+      35: fstore_1
+      36: fload_1
+      37: freturn
+
+  private void generateLevel();
+    Code:
+       0: aload_0
+       1: aload_0
+       2: getfield      #288                // Field height:I
+       5: aload_0
+       6: getfield      #286                // Field width:I
+       9: multianewarray #312,  2           // class "[[I"
+      13: putfield      #290                // Field stoneHealth:[[I
+      16: aload_0
+      17: aload_0
+      18: getfield      #288                // Field height:I
+      21: aload_0
+      22: getfield      #286                // Field width:I
+      25: multianewarray #312,  2           // class "[[I"
+      29: putfield      #292                // Field dirtHealth:[[I
+      32: aload_0
+      33: aload_0
+      34: getfield      #288                // Field height:I
+      37: aload_0
+      38: getfield      #286                // Field width:I
+      41: multianewarray #305,  2           // class "[[Lnet/minecraft/class_1792;"
+      45: putfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+      48: aload_0
+      49: aload_0
+      50: getfield      #288                // Field height:I
+      53: aload_0
+      54: getfield      #286                // Field width:I
+      57: multianewarray #313,  2           // class "[[Z"
+      61: putfield      #294                // Field hasBedrock:[[Z
+      64: aload_0
+      65: iconst_0
+      66: putfield      #373                // Field gameOver:Z
+      69: aload_0
+      70: iconst_0
+      71: putfield      #375                // Field won:Z
+      74: aload_0
+      75: getfield      #138                // Field collectedItemStacks:Ljava/util/List;
+      78: invokeinterface #515,  1          // InterfaceMethod java/util/List.clear:()V
+      83: aload_0
+      84: getfield      #131                // Field collectedTreasures:Ljava/util/Set;
+      87: invokeinterface #516,  1          // InterfaceMethod java/util/Set.clear:()V
+      92: aload_0
+      93: getfield      #136                // Field treasures:Ljava/util/List;
+      96: invokeinterface #515,  1          // InterfaceMethod java/util/List.clear:()V
+     101: ldc_w         #517                // float 0.2f
+     104: fstore_1
+     105: iconst_0
+     106: istore_2
+     107: iload_2
+     108: aload_0
+     109: getfield      #288                // Field height:I
+     112: if_icmpge     170
+     115: iconst_0
+     116: istore_3
+     117: iload_3
+     118: aload_0
+     119: getfield      #286                // Field width:I
+     122: if_icmpge     164
+     125: aload_0
+     126: getfield      #290                // Field stoneHealth:[[I
+     129: iload_2
+     130: aaload
+     131: iload_3
+     132: aload_0
+     133: getfield      #143                // Field random:Ljava/util/Random;
+     136: invokevirtual #411                // Method java/util/Random.nextFloat:()F
+     139: fload_1
+     140: fcmpg
+     141: ifge          153
+     144: aload_0
+     145: getfield      #217                // Field stoneLayerHealth:I
+     148: iconst_2
+     149: imul
+     150: goto          157
+     153: aload_0
+     154: getfield      #217                // Field stoneLayerHealth:I
+     157: iastore
+     158: iinc          3, 1
+     161: goto          117
+     164: iinc          2, 1
+     167: goto          107
+     170: aload_0
+     171: invokevirtual #522                // Method generateDirtLayerWithNoise:()V
+     174: aload_0
+     175: getfield      #286                // Field width:I
+     178: aload_0
+     179: getfield      #288                // Field height:I
+     182: imul
+     183: istore_2
+     184: iconst_2
+     185: aload_0
+     186: getfield      #143                // Field random:Ljava/util/Random;
+     189: iconst_1
+     190: iload_2
+     191: bipush        15
+     193: idiv
+     194: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     197: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     200: iadd
+     201: istore_3
+     202: ldc_w         #525                // float 3.0f
+     205: iload_3
+     206: i2f
+     207: aload_0
+     208: getfield      #210                // Field effectiveRarityModifier:F
+     211: fmul
+     212: invokestatic  #463                // Method java/lang/Math.max:(FF)F
+     215: f2i
+     216: istore        4
+     218: iconst_0
+     219: istore        5
+     221: aload_0
+     222: getfield      #136                // Field treasures:Ljava/util/List;
+     225: invokeinterface #504,  1          // InterfaceMethod java/util/List.size:()I
+     230: iload         4
+     232: if_icmpge     253
+     235: iload         5
+     237: sipush        150
+     240: if_icmpge     253
+     243: aload_0
+     244: invokevirtual #528                // Method placeTreasureFromConfig:()V
+     247: iinc          5, 1
+     250: goto          221
+     253: aload_0
+     254: invokevirtual #531                // Method placeBedrockBlocks:()V
+     257: return
+
+  private void generateDirtLayerWithNoise();
+    Code:
+       0: aload_0
+       1: getfield      #222                // Field dirtLayerHealth:I
+       4: istore_1
+       5: aload_0
+       6: getfield      #165                // Field isDeep:Z
+       9: ifeq          31
+      12: aload_0
+      13: getfield      #167                // Field extraDirtLayers:I
+      16: ifle          31
+      19: aload_0
+      20: getfield      #222                // Field dirtLayerHealth:I
+      23: iconst_1
+      24: aload_0
+      25: getfield      #167                // Field extraDirtLayers:I
+      28: iadd
+      29: imul
+      30: istore_1
+      31: iconst_0
+      32: istore_2
+      33: iload_2
+      34: aload_0
+      35: getfield      #288                // Field height:I
+      38: if_icmpge     72
+      41: iconst_0
+      42: istore_3
+      43: iload_3
+      44: aload_0
+      45: getfield      #286                // Field width:I
+      48: if_icmpge     66
+      51: aload_0
+      52: getfield      #292                // Field dirtHealth:[[I
+      55: iload_2
+      56: aaload
+      57: iload_3
+      58: iload_1
+      59: iastore
+      60: iinc          3, 1
+      63: goto          43
+      66: iinc          2, 1
+      69: goto          33
+      72: return
+
+  private void placeBedrockBlocks();
+    Code:
+       0: aload_0
+       1: getfield      #286                // Field width:I
+       4: aload_0
+       5: getfield      #288                // Field height:I
+       8: imul
+       9: istore_1
+      10: iload_1
+      11: i2f
+      12: aload_0
+      13: getfield      #228                // Field bedrockChance:F
+      16: fmul
+      17: f2i
+      18: istore_2
+      19: iconst_1
+      20: iload_2
+      21: aload_0
+      22: getfield      #143                // Field random:Ljava/util/Random;
+      25: iconst_1
+      26: iload_2
+      27: iconst_3
+      28: idiv
+      29: iconst_1
+      30: iadd
+      31: invokestatic  #524                // Method java/lang/Math.max:(II)I
+      34: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      37: iadd
+      38: iload_2
+      39: bipush        6
+      41: idiv
+      42: isub
+      43: invokestatic  #524                // Method java/lang/Math.max:(II)I
+      46: istore_2
+      47: iconst_0
+      48: istore_3
+      49: iload_3
+      50: iload_2
+      51: if_icmpge     64
+      54: aload_0
+      55: invokevirtual #540                // Method placeSingleBedrock:()V
+      58: iinc          3, 1
+      61: goto          49
+      64: return
+
+  private void placeSingleBedrock();
+    Code:
+       0: iconst_0
+       1: istore_1
+       2: iload_1
+       3: bipush        50
+       5: if_icmpge     70
+       8: aload_0
+       9: getfield      #143                // Field random:Ljava/util/Random;
+      12: aload_0
+      13: getfield      #286                // Field width:I
+      16: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      19: istore_2
+      20: aload_0
+      21: getfield      #143                // Field random:Ljava/util/Random;
+      24: aload_0
+      25: getfield      #288                // Field height:I
+      28: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      31: istore_3
+      32: aload_0
+      33: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+      36: iload_3
+      37: aaload
+      38: iload_2
+      39: aaload
+      40: ifnonnull     64
+      43: aload_0
+      44: getfield      #294                // Field hasBedrock:[[Z
+      47: iload_3
+      48: aaload
+      49: iload_2
+      50: baload
+      51: ifne          64
+      54: aload_0
+      55: getfield      #294                // Field hasBedrock:[[Z
+      58: iload_3
+      59: aaload
+      60: iload_2
+      61: iconst_1
+      62: bastore
+      63: return
+      64: iinc          1, 1
+      67: goto          2
+      70: return
+
+  private void placeTreasureFromConfig();
+    Code:
+       0: aload_0
+       1: getfield      #169                // Field useOnlyBlockSpecificLoot:Z
+       4: ifeq          24
+       7: aload_0
+       8: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+      11: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+      16: ifne          24
+      19: aload_0
+      20: invokevirtual #547                // Method placeTreasureFromBlockSpecificLoot:()V
+      23: return
+      24: getstatic     #551                // Field handyfon/pickaxeminigame/Pickaxeminigame.LOOT:Lhandyfon/pickaxeminigame/MiningLootConfig;
+      27: getfield      #554                // Field handyfon/pickaxeminigame/MiningLootConfig.possibleTreasures:Ljava/util/List;
+      30: invokeinterface #558,  1          // InterfaceMethod java/util/List.stream:()Ljava/util/stream/Stream;
+      35: invokedynamic #577,  0            // InvokeDynamic #0:test:()Ljava/util/function/Predicate;
+      40: invokeinterface #583,  2          // InterfaceMethod java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+      45: aload_0
+      46: invokedynamic #590,  0            // InvokeDynamic #1:test:(Lhandyfon/pickaxeminigame/MiningGrid;)Ljava/util/function/Predicate;
+      51: invokeinterface #583,  2          // InterfaceMethod java/util/stream/Stream.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+      56: invokeinterface #593,  1          // InterfaceMethod java/util/stream/Stream.toList:()Ljava/util/List;
+      61: astore_1
+      62: aload_0
+      63: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+      66: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+      71: ifne          80
+      74: aload_0
+      75: aload_1
+      76: invokevirtual #597                // Method placeTreasureFromCombinedLoot:(Ljava/util/List;)V
+      79: return
+      80: aload_1
+      81: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+      86: ifeq          90
+      89: return
+      90: aload_0
+      91: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      94: getfield      #339                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.layerClearRarityBonus:F
+      97: f2d
+      98: aload_0
+      99: getfield      #157                // Field currentLevel:I
+     102: i2d
+     103: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     106: d2f
+     107: fstore_2
+     108: aload_0
+     109: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     112: getfield      #341                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.baseRarityMultiplier:F
+     115: aload_0
+     116: getfield      #210                // Field effectiveRarityModifier:F
+     119: fmul
+     120: aload_0
+     121: getfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+     124: aload_0
+     125: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     128: invokevirtual #605                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.getRarityBonus:(Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;)F
+     131: fmul
+     132: fload_2
+     133: fmul
+     134: fstore_3
+     135: dconst_0
+     136: dstore        4
+     138: aload_1
+     139: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     144: astore        6
+     146: aload         6
+     148: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     153: ifeq          191
+     156: aload         6
+     158: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     163: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     166: astore        7
+     168: dload         4
+     170: dconst_1
+     171: aload         7
+     173: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     176: i2d
+     177: ddiv
+     178: dconst_1
+     179: fload_3
+     180: f2d
+     181: ddiv
+     182: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     185: dadd
+     186: dstore        4
+     188: goto          146
+     191: aload_0
+     192: getfield      #143                // Field random:Ljava/util/Random;
+     195: invokevirtual #612                // Method java/util/Random.nextDouble:()D
+     198: dload         4
+     200: dmul
+     201: dstore        6
+     203: aload_1
+     204: iconst_0
+     205: invokeinterface #616,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+     210: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     213: astore        8
+     215: aload_1
+     216: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     221: astore        9
+     223: aload         9
+     225: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     230: ifeq          282
+     233: aload         9
+     235: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     240: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     243: astore        10
+     245: dload         6
+     247: dconst_1
+     248: aload         10
+     250: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     253: i2d
+     254: ddiv
+     255: dconst_1
+     256: fload_3
+     257: f2d
+     258: ddiv
+     259: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     262: dsub
+     263: dstore        6
+     265: dload         6
+     267: dconst_0
+     268: dcmpg
+     269: ifgt          279
+     272: aload         10
+     274: astore        8
+     276: goto          282
+     279: goto          223
+     282: aload         8
+     284: invokevirtual #620                // Method handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.createStack:()Lnet/minecraft/class_1799;
+     287: astore        9
+     289: aload         9
+     291: invokevirtual #626                // Method net/minecraft/class_1799.method_7909:()Lnet/minecraft/class_1792;
+     294: astore        10
+     296: aload         8
+     298: getfield      #627                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.width:I
+     301: istore        11
+     303: aload         8
+     305: getfield      #628                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.height:I
+     308: istore        12
+     310: iconst_0
+     311: istore        13
+     313: iload         13
+     315: bipush        50
+     317: if_icmpge     541
+     320: aload_0
+     321: getfield      #143                // Field random:Ljava/util/Random;
+     324: iconst_1
+     325: aload_0
+     326: getfield      #286                // Field width:I
+     329: iload         11
+     331: isub
+     332: iconst_1
+     333: iadd
+     334: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     337: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     340: istore        14
+     342: aload_0
+     343: getfield      #143                // Field random:Ljava/util/Random;
+     346: iconst_1
+     347: aload_0
+     348: getfield      #288                // Field height:I
+     351: iload         12
+     353: isub
+     354: iconst_1
+     355: iadd
+     356: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     359: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     362: istore        15
+     364: aload_0
+     365: iload         14
+     367: iload         15
+     369: iload         11
+     371: iload         12
+     373: invokevirtual #634                // Method canPlaceTreasure:(IIII)Z
+     376: ifeq          535
+     379: aload         8
+     381: getfield      #637                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.minYield:I
+     384: aload_0
+     385: getfield      #143                // Field random:Ljava/util/Random;
+     388: aload         8
+     390: getfield      #640                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.maxYield:I
+     393: aload         8
+     395: getfield      #637                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.minYield:I
+     398: isub
+     399: iconst_1
+     400: iadd
+     401: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     404: iadd
+     405: istore        16
+     407: new           #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+     410: dup
+     411: aload         10
+     413: aload         9
+     415: iload         14
+     417: iload         15
+     419: iload         11
+     421: iload         12
+     423: iload         16
+     425: aload         8
+     427: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     430: invokespecial #643                // Method handyfon/pickaxeminigame/MiningGrid$HiddenTreasure."<init>":(Lnet/minecraft/class_1792;Lnet/minecraft/class_1799;IIIIII)V
+     433: astore        17
+     435: aload_0
+     436: getfield      #136                // Field treasures:Ljava/util/List;
+     439: aload         17
+     441: invokeinterface #646,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     446: pop
+     447: iconst_0
+     448: istore        18
+     450: iload         18
+     452: iload         12
+     454: if_icmpge     534
+     457: iconst_0
+     458: istore        19
+     460: iload         19
+     462: iload         11
+     464: if_icmpge     528
+     467: aload_0
+     468: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     471: iload         15
+     473: iload         18
+     475: iadd
+     476: aaload
+     477: iload         14
+     479: iload         19
+     481: iadd
+     482: aload         10
+     484: aastore
+     485: aload_0
+     486: getfield      #294                // Field hasBedrock:[[Z
+     489: iload         15
+     491: iload         18
+     493: iadd
+     494: aaload
+     495: iload         14
+     497: iload         19
+     499: iadd
+     500: iconst_0
+     501: bastore
+     502: aload_0
+     503: getfield      #292                // Field dirtHealth:[[I
+     506: iload         15
+     508: iload         18
+     510: iadd
+     511: aaload
+     512: iload         14
+     514: iload         19
+     516: iadd
+     517: aload_0
+     518: getfield      #222                // Field dirtLayerHealth:I
+     521: iastore
+     522: iinc          19, 1
+     525: goto          460
+     528: iinc          18, 1
+     531: goto          450
+     534: return
+     535: iinc          13, 1
+     538: goto          313
+     541: return
+
+  private void placeTreasureFromBlockSpecificLoot();
+    Code:
+       0: aload_0
+       1: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+       4: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+       9: ifeq          13
+      12: return
+      13: aload_0
+      14: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      17: getfield      #339                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.layerClearRarityBonus:F
+      20: f2d
+      21: aload_0
+      22: getfield      #157                // Field currentLevel:I
+      25: i2d
+      26: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+      29: d2f
+      30: fstore_1
+      31: aload_0
+      32: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      35: getfield      #341                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.baseRarityMultiplier:F
+      38: aload_0
+      39: getfield      #210                // Field effectiveRarityModifier:F
+      42: fmul
+      43: aload_0
+      44: getfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      47: aload_0
+      48: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      51: invokevirtual #605                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.getRarityBonus:(Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;)F
+      54: fmul
+      55: fload_1
+      56: fmul
+      57: fstore_2
+      58: dconst_0
+      59: dstore_3
+      60: aload_0
+      61: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+      64: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      69: astore        5
+      71: aload         5
+      73: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      78: ifeq          114
+      81: aload         5
+      83: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      88: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+      91: astore        6
+      93: dload_3
+      94: dconst_1
+      95: aload         6
+      97: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+     100: i2d
+     101: ddiv
+     102: dconst_1
+     103: fload_2
+     104: f2d
+     105: ddiv
+     106: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     109: dadd
+     110: dstore_3
+     111: goto          71
+     114: aload_0
+     115: getfield      #143                // Field random:Ljava/util/Random;
+     118: invokevirtual #612                // Method java/util/Random.nextDouble:()D
+     121: dload_3
+     122: dmul
+     123: dstore        5
+     125: aload_0
+     126: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     129: iconst_0
+     130: invokeinterface #616,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+     135: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+     138: astore        7
+     140: aload_0
+     141: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     144: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     149: astore        8
+     151: aload         8
+     153: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     158: ifeq          210
+     161: aload         8
+     163: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     168: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+     171: astore        9
+     173: dload         5
+     175: dconst_1
+     176: aload         9
+     178: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+     181: i2d
+     182: ddiv
+     183: dconst_1
+     184: fload_2
+     185: f2d
+     186: ddiv
+     187: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     190: dsub
+     191: dstore        5
+     193: dload         5
+     195: dconst_0
+     196: dcmpg
+     197: ifgt          207
+     200: aload         9
+     202: astore        7
+     204: goto          210
+     207: goto          151
+     210: aload         7
+     212: getfield      #667                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.itemId:Ljava/lang/String;
+     215: invokestatic  #670                // Method net/minecraft/class_2960.method_12829:(Ljava/lang/String;)Lnet/minecraft/class_2960;
+     218: astore        8
+     220: aload         8
+     222: ifnonnull     226
+     225: return
+     226: getstatic     #676                // Field net/minecraft/class_7923.field_41178:Lnet/minecraft/class_7922;
+     229: aload         8
+     231: invokeinterface #682,  2          // InterfaceMethod net/minecraft/class_7922.method_10223:(Lnet/minecraft/class_2960;)Ljava/lang/Object;
+     236: checkcast     #630                // class net/minecraft/class_1792
+     239: astore        9
+     241: aload         9
+     243: getstatic     #687                // Field net/minecraft/class_1802.field_8162:Lnet/minecraft/class_1792;
+     246: if_acmpne     250
+     249: return
+     250: new           #622                // class net/minecraft/class_1799
+     253: dup
+     254: aload         9
+     256: invokespecial #690                // Method net/minecraft/class_1799."<init>":(Lnet/minecraft/class_1935;)V
+     259: astore        10
+     261: aload         7
+     263: getfield      #691                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.width:I
+     266: istore        11
+     268: aload         7
+     270: getfield      #692                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.height:I
+     273: istore        12
+     275: iconst_0
+     276: istore        13
+     278: iload         13
+     280: bipush        50
+     282: if_icmpge     506
+     285: aload_0
+     286: getfield      #143                // Field random:Ljava/util/Random;
+     289: iconst_1
+     290: aload_0
+     291: getfield      #286                // Field width:I
+     294: iload         11
+     296: isub
+     297: iconst_1
+     298: iadd
+     299: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     302: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     305: istore        14
+     307: aload_0
+     308: getfield      #143                // Field random:Ljava/util/Random;
+     311: iconst_1
+     312: aload_0
+     313: getfield      #288                // Field height:I
+     316: iload         12
+     318: isub
+     319: iconst_1
+     320: iadd
+     321: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     324: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     327: istore        15
+     329: aload_0
+     330: iload         14
+     332: iload         15
+     334: iload         11
+     336: iload         12
+     338: invokevirtual #634                // Method canPlaceTreasure:(IIII)Z
+     341: ifeq          500
+     344: aload         7
+     346: getfield      #693                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.minYield:I
+     349: aload_0
+     350: getfield      #143                // Field random:Ljava/util/Random;
+     353: aload         7
+     355: getfield      #694                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.maxYield:I
+     358: aload         7
+     360: getfield      #693                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.minYield:I
+     363: isub
+     364: iconst_1
+     365: iadd
+     366: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     369: iadd
+     370: istore        16
+     372: new           #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+     375: dup
+     376: aload         9
+     378: aload         10
+     380: iload         14
+     382: iload         15
+     384: iload         11
+     386: iload         12
+     388: iload         16
+     390: aload         7
+     392: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+     395: invokespecial #643                // Method handyfon/pickaxeminigame/MiningGrid$HiddenTreasure."<init>":(Lnet/minecraft/class_1792;Lnet/minecraft/class_1799;IIIIII)V
+     398: astore        17
+     400: aload_0
+     401: getfield      #136                // Field treasures:Ljava/util/List;
+     404: aload         17
+     406: invokeinterface #646,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     411: pop
+     412: iconst_0
+     413: istore        18
+     415: iload         18
+     417: iload         12
+     419: if_icmpge     499
+     422: iconst_0
+     423: istore        19
+     425: iload         19
+     427: iload         11
+     429: if_icmpge     493
+     432: aload_0
+     433: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     436: iload         15
+     438: iload         18
+     440: iadd
+     441: aaload
+     442: iload         14
+     444: iload         19
+     446: iadd
+     447: aload         9
+     449: aastore
+     450: aload_0
+     451: getfield      #294                // Field hasBedrock:[[Z
+     454: iload         15
+     456: iload         18
+     458: iadd
+     459: aaload
+     460: iload         14
+     462: iload         19
+     464: iadd
+     465: iconst_0
+     466: bastore
+     467: aload_0
+     468: getfield      #292                // Field dirtHealth:[[I
+     471: iload         15
+     473: iload         18
+     475: iadd
+     476: aaload
+     477: iload         14
+     479: iload         19
+     481: iadd
+     482: aload_0
+     483: getfield      #222                // Field dirtLayerHealth:I
+     486: iastore
+     487: iinc          19, 1
+     490: goto          425
+     493: iinc          18, 1
+     496: goto          415
+     499: return
+     500: iinc          13, 1
+     503: goto          278
+     506: return
+
+  private void placeTreasureFromCombinedLoot(java.util.List<handyfon.pickaxeminigame.MiningLootConfig$TreasureEntry>);
+    Code:
+       0: aload_0
+       1: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+       4: getfield      #339                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.layerClearRarityBonus:F
+       7: f2d
+       8: aload_0
+       9: getfield      #157                // Field currentLevel:I
+      12: i2d
+      13: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+      16: d2f
+      17: fstore_2
+      18: aload_0
+      19: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      22: getfield      #341                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.baseRarityMultiplier:F
+      25: aload_0
+      26: getfield      #210                // Field effectiveRarityModifier:F
+      29: fmul
+      30: aload_0
+      31: getfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+      34: aload_0
+      35: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      38: invokevirtual #605                // Method handyfon/pickaxeminigame/MiningGrid$GridSize.getRarityBonus:(Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;)F
+      41: fmul
+      42: fload_2
+      43: fmul
+      44: fstore_3
+      45: dconst_0
+      46: dstore        4
+      48: aload_0
+      49: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+      52: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      57: astore        6
+      59: aload         6
+      61: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      66: ifeq          104
+      69: aload         6
+      71: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      76: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+      79: astore        7
+      81: dload         4
+      83: dconst_1
+      84: aload         7
+      86: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+      89: i2d
+      90: ddiv
+      91: dconst_1
+      92: fload_3
+      93: f2d
+      94: ddiv
+      95: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+      98: dadd
+      99: dstore        4
+     101: goto          59
+     104: aload_1
+     105: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     110: astore        6
+     112: aload         6
+     114: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     119: ifeq          157
+     122: aload         6
+     124: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     129: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     132: astore        7
+     134: dload         4
+     136: dconst_1
+     137: aload         7
+     139: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     142: i2d
+     143: ddiv
+     144: dconst_1
+     145: fload_3
+     146: f2d
+     147: ddiv
+     148: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     151: dadd
+     152: dstore        4
+     154: goto          112
+     157: dload         4
+     159: dconst_0
+     160: dcmpg
+     161: ifgt          165
+     164: return
+     165: aload_0
+     166: getfield      #143                // Field random:Ljava/util/Random;
+     169: invokevirtual #612                // Method java/util/Random.nextDouble:()D
+     172: dload         4
+     174: dmul
+     175: dstore        6
+     177: aload_0
+     178: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     181: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     186: astore        8
+     188: aload         8
+     190: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     195: ifeq          247
+     198: aload         8
+     200: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     205: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+     208: astore        9
+     210: dload         6
+     212: dconst_1
+     213: aload         9
+     215: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+     218: i2d
+     219: ddiv
+     220: dconst_1
+     221: fload_3
+     222: f2d
+     223: ddiv
+     224: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     227: dsub
+     228: dstore        6
+     230: dload         6
+     232: dconst_0
+     233: dcmpg
+     234: ifgt          244
+     237: aload_0
+     238: aload         9
+     240: invokevirtual #702                // Method placeBlockSpecificTreasure:(Lhandyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry;)V
+     243: return
+     244: goto          188
+     247: aload_1
+     248: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+     253: astore        8
+     255: aload         8
+     257: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     262: ifeq          314
+     265: aload         8
+     267: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     272: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     275: astore        9
+     277: dload         6
+     279: dconst_1
+     280: aload         9
+     282: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     285: i2d
+     286: ddiv
+     287: dconst_1
+     288: fload_3
+     289: f2d
+     290: ddiv
+     291: invokestatic  #601                // Method java/lang/Math.pow:(DD)D
+     294: dsub
+     295: dstore        6
+     297: dload         6
+     299: dconst_0
+     300: dcmpg
+     301: ifgt          311
+     304: aload_0
+     305: aload         9
+     307: invokevirtual #706                // Method placeGlobalTreasure:(Lhandyfon/pickaxeminigame/MiningLootConfig$TreasureEntry;)V
+     310: return
+     311: goto          255
+     314: aload_0
+     315: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     318: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     323: ifne          346
+     326: aload_0
+     327: aload_0
+     328: getfield      #171                // Field blockSpecificTreasures:Ljava/util/List;
+     331: iconst_0
+     332: invokeinterface #616,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+     337: checkcast     #29                 // class handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry
+     340: invokevirtual #702                // Method placeBlockSpecificTreasure:(Lhandyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry;)V
+     343: goto          369
+     346: aload_1
+     347: invokeinterface #544,  1          // InterfaceMethod java/util/List.isEmpty:()Z
+     352: ifne          369
+     355: aload_0
+     356: aload_1
+     357: iconst_0
+     358: invokeinterface #616,  2          // InterfaceMethod java/util/List.get:(I)Ljava/lang/Object;
+     363: checkcast     #24                 // class handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry
+     366: invokevirtual #706                // Method placeGlobalTreasure:(Lhandyfon/pickaxeminigame/MiningLootConfig$TreasureEntry;)V
+     369: return
+
+  private void placeBlockSpecificTreasure(handyfon.pickaxeminigame.MiningBlockConfig$BlockTreasureEntry);
+    Code:
+       0: aload_1
+       1: getfield      #667                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.itemId:Ljava/lang/String;
+       4: invokestatic  #670                // Method net/minecraft/class_2960.method_12829:(Ljava/lang/String;)Lnet/minecraft/class_2960;
+       7: astore_2
+       8: aload_2
+       9: ifnonnull     13
+      12: return
+      13: getstatic     #676                // Field net/minecraft/class_7923.field_41178:Lnet/minecraft/class_7922;
+      16: aload_2
+      17: invokeinterface #682,  2          // InterfaceMethod net/minecraft/class_7922.method_10223:(Lnet/minecraft/class_2960;)Ljava/lang/Object;
+      22: checkcast     #630                // class net/minecraft/class_1792
+      25: astore_3
+      26: aload_3
+      27: getstatic     #687                // Field net/minecraft/class_1802.field_8162:Lnet/minecraft/class_1792;
+      30: if_acmpne     34
+      33: return
+      34: new           #622                // class net/minecraft/class_1799
+      37: dup
+      38: aload_3
+      39: invokespecial #690                // Method net/minecraft/class_1799."<init>":(Lnet/minecraft/class_1935;)V
+      42: astore        4
+      44: aload_1
+      45: getfield      #691                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.width:I
+      48: istore        5
+      50: aload_1
+      51: getfield      #692                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.height:I
+      54: istore        6
+      56: iconst_0
+      57: istore        7
+      59: iload         7
+      61: bipush        50
+      63: if_icmpge     281
+      66: aload_0
+      67: getfield      #143                // Field random:Ljava/util/Random;
+      70: iconst_1
+      71: aload_0
+      72: getfield      #286                // Field width:I
+      75: iload         5
+      77: isub
+      78: iconst_1
+      79: iadd
+      80: invokestatic  #524                // Method java/lang/Math.max:(II)I
+      83: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      86: istore        8
+      88: aload_0
+      89: getfield      #143                // Field random:Ljava/util/Random;
+      92: iconst_1
+      93: aload_0
+      94: getfield      #288                // Field height:I
+      97: iload         6
+      99: isub
+     100: iconst_1
+     101: iadd
+     102: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     105: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     108: istore        9
+     110: aload_0
+     111: iload         8
+     113: iload         9
+     115: iload         5
+     117: iload         6
+     119: invokevirtual #634                // Method canPlaceTreasure:(IIII)Z
+     122: ifeq          275
+     125: aload_1
+     126: getfield      #693                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.minYield:I
+     129: aload_0
+     130: getfield      #143                // Field random:Ljava/util/Random;
+     133: aload_1
+     134: getfield      #694                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.maxYield:I
+     137: aload_1
+     138: getfield      #693                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.minYield:I
+     141: isub
+     142: iconst_1
+     143: iadd
+     144: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     147: iadd
+     148: istore        10
+     150: new           #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+     153: dup
+     154: aload_3
+     155: aload         4
+     157: iload         8
+     159: iload         9
+     161: iload         5
+     163: iload         6
+     165: iload         10
+     167: aload_1
+     168: getfield      #664                // Field handyfon/pickaxeminigame/MiningBlockConfig$BlockTreasureEntry.rarity:I
+     171: invokespecial #643                // Method handyfon/pickaxeminigame/MiningGrid$HiddenTreasure."<init>":(Lnet/minecraft/class_1792;Lnet/minecraft/class_1799;IIIIII)V
+     174: astore        11
+     176: aload_0
+     177: getfield      #136                // Field treasures:Ljava/util/List;
+     180: aload         11
+     182: invokeinterface #646,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     187: pop
+     188: iconst_0
+     189: istore        12
+     191: iload         12
+     193: iload         6
+     195: if_icmpge     274
+     198: iconst_0
+     199: istore        13
+     201: iload         13
+     203: iload         5
+     205: if_icmpge     268
+     208: aload_0
+     209: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     212: iload         9
+     214: iload         12
+     216: iadd
+     217: aaload
+     218: iload         8
+     220: iload         13
+     222: iadd
+     223: aload_3
+     224: aastore
+     225: aload_0
+     226: getfield      #294                // Field hasBedrock:[[Z
+     229: iload         9
+     231: iload         12
+     233: iadd
+     234: aaload
+     235: iload         8
+     237: iload         13
+     239: iadd
+     240: iconst_0
+     241: bastore
+     242: aload_0
+     243: getfield      #292                // Field dirtHealth:[[I
+     246: iload         9
+     248: iload         12
+     250: iadd
+     251: aaload
+     252: iload         8
+     254: iload         13
+     256: iadd
+     257: aload_0
+     258: getfield      #222                // Field dirtLayerHealth:I
+     261: iastore
+     262: iinc          13, 1
+     265: goto          201
+     268: iinc          12, 1
+     271: goto          191
+     274: return
+     275: iinc          7, 1
+     278: goto          59
+     281: return
+
+  private void placeGlobalTreasure(handyfon.pickaxeminigame.MiningLootConfig$TreasureEntry);
+    Code:
+       0: aload_1
+       1: invokevirtual #620                // Method handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.createStack:()Lnet/minecraft/class_1799;
+       4: astore_2
+       5: aload_2
+       6: invokevirtual #626                // Method net/minecraft/class_1799.method_7909:()Lnet/minecraft/class_1792;
+       9: astore_3
+      10: aload_1
+      11: getfield      #627                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.width:I
+      14: istore        4
+      16: aload_1
+      17: getfield      #628                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.height:I
+      20: istore        5
+      22: iconst_0
+      23: istore        6
+      25: iload         6
+      27: bipush        50
+      29: if_icmpge     246
+      32: aload_0
+      33: getfield      #143                // Field random:Ljava/util/Random;
+      36: iconst_1
+      37: aload_0
+      38: getfield      #286                // Field width:I
+      41: iload         4
+      43: isub
+      44: iconst_1
+      45: iadd
+      46: invokestatic  #524                // Method java/lang/Math.max:(II)I
+      49: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      52: istore        7
+      54: aload_0
+      55: getfield      #143                // Field random:Ljava/util/Random;
+      58: iconst_1
+      59: aload_0
+      60: getfield      #288                // Field height:I
+      63: iload         5
+      65: isub
+      66: iconst_1
+      67: iadd
+      68: invokestatic  #524                // Method java/lang/Math.max:(II)I
+      71: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+      74: istore        8
+      76: aload_0
+      77: iload         7
+      79: iload         8
+      81: iload         4
+      83: iload         5
+      85: invokevirtual #634                // Method canPlaceTreasure:(IIII)Z
+      88: ifeq          240
+      91: aload_1
+      92: getfield      #637                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.minYield:I
+      95: aload_0
+      96: getfield      #143                // Field random:Ljava/util/Random;
+      99: aload_1
+     100: getfield      #640                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.maxYield:I
+     103: aload_1
+     104: getfield      #637                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.minYield:I
+     107: isub
+     108: iconst_1
+     109: iadd
+     110: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     113: iadd
+     114: istore        9
+     116: new           #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+     119: dup
+     120: aload_3
+     121: aload_2
+     122: iload         7
+     124: iload         8
+     126: iload         4
+     128: iload         5
+     130: iload         9
+     132: aload_1
+     133: getfield      #608                // Field handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.rarity:I
+     136: invokespecial #643                // Method handyfon/pickaxeminigame/MiningGrid$HiddenTreasure."<init>":(Lnet/minecraft/class_1792;Lnet/minecraft/class_1799;IIIIII)V
+     139: astore        10
+     141: aload_0
+     142: getfield      #136                // Field treasures:Ljava/util/List;
+     145: aload         10
+     147: invokeinterface #646,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+     152: pop
+     153: iconst_0
+     154: istore        11
+     156: iload         11
+     158: iload         5
+     160: if_icmpge     239
+     163: iconst_0
+     164: istore        12
+     166: iload         12
+     168: iload         4
+     170: if_icmpge     233
+     173: aload_0
+     174: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     177: iload         8
+     179: iload         11
+     181: iadd
+     182: aaload
+     183: iload         7
+     185: iload         12
+     187: iadd
+     188: aload_3
+     189: aastore
+     190: aload_0
+     191: getfield      #294                // Field hasBedrock:[[Z
+     194: iload         8
+     196: iload         11
+     198: iadd
+     199: aaload
+     200: iload         7
+     202: iload         12
+     204: iadd
+     205: iconst_0
+     206: bastore
+     207: aload_0
+     208: getfield      #292                // Field dirtHealth:[[I
+     211: iload         8
+     213: iload         11
+     215: iadd
+     216: aaload
+     217: iload         7
+     219: iload         12
+     221: iadd
+     222: aload_0
+     223: getfield      #222                // Field dirtLayerHealth:I
+     226: iastore
+     227: iinc          12, 1
+     230: goto          166
+     233: iinc          11, 1
+     236: goto          156
+     239: return
+     240: iinc          6, 1
+     243: goto          25
+     246: return
+
+  private boolean canPlaceTreasure(int, int, int, int);
+    Code:
+       0: iload_1
+       1: iload_3
+       2: iadd
+       3: aload_0
+       4: getfield      #286                // Field width:I
+       7: if_icmpgt     21
+      10: iload_2
+      11: iload         4
+      13: iadd
+      14: aload_0
+      15: getfield      #288                // Field height:I
+      18: if_icmple     23
+      21: iconst_0
+      22: ireturn
+      23: iconst_0
+      24: istore        5
+      26: iload         5
+      28: iload         4
+      30: if_icmpge     73
+      33: iconst_0
+      34: istore        6
+      36: iload         6
+      38: iload_3
+      39: if_icmpge     67
+      42: aload_0
+      43: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+      46: iload_2
+      47: iload         5
+      49: iadd
+      50: aaload
+      51: iload_1
+      52: iload         6
+      54: iadd
+      55: aaload
+      56: ifnull        61
+      59: iconst_0
+      60: ireturn
+      61: iinc          6, 1
+      64: goto          36
+      67: iinc          5, 1
+      70: goto          26
+      73: iconst_1
+      74: ireturn
+
+  public handyfon.pickaxeminigame.MiningGrid$Tool getCurrentTool();
+    Code:
+       0: aload_0
+       1: getfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+       4: areturn
+
+  public void setTool(handyfon.pickaxeminigame.MiningGrid$Tool);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+       5: return
+
+  public void cycleTool();
+    Code:
+       0: aload_0
+       1: invokestatic  #717                // Method handyfon/pickaxeminigame/MiningGrid$Tool.values:()[Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+       4: aload_0
+       5: getfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+       8: invokevirtual #718                // Method handyfon/pickaxeminigame/MiningGrid$Tool.ordinal:()I
+      11: iconst_1
+      12: iadd
+      13: invokestatic  #717                // Method handyfon/pickaxeminigame/MiningGrid$Tool.values:()[Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      16: arraylength
+      17: irem
+      18: aaload
+      19: putfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+      22: return
+
+  public int[][] getToolOffsetsWithDamage();
+    Code:
+       0: aload_0
+       1: getfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+       4: invokevirtual #718                // Method handyfon/pickaxeminigame/MiningGrid$Tool.ordinal:()I
+       7: tableswitch   { // 0 to 2
+
+                     0: 42
+
+                     1: 71
+
+                     2: 188
+               default: 32
+          }
+      32: new           #722                // class java/lang/MatchException
+      35: dup
+      36: aconst_null
+      37: aconst_null
+      38: invokespecial #725                // Method java/lang/MatchException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+      41: athrow
+      42: iconst_1
+      43: anewarray     #519                // class "[I"
+      46: dup
+      47: iconst_0
+      48: iconst_4
+      49: newarray       int
+      51: dup
+      52: iconst_0
+      53: iconst_0
+      54: iastore
+      55: dup
+      56: iconst_1
+      57: iconst_0
+      58: iastore
+      59: dup
+      60: iconst_2
+      61: iconst_1
+      62: iastore
+      63: dup
+      64: iconst_3
+      65: iconst_1
+      66: iastore
+      67: aastore
+      68: goto          394
+      71: iconst_5
+      72: anewarray     #519                // class "[I"
+      75: dup
+      76: iconst_0
+      77: iconst_4
+      78: newarray       int
+      80: dup
+      81: iconst_0
+      82: iconst_0
+      83: iastore
+      84: dup
+      85: iconst_1
+      86: iconst_0
+      87: iastore
+      88: dup
+      89: iconst_2
+      90: iconst_2
+      91: iastore
+      92: dup
+      93: iconst_3
+      94: iconst_2
+      95: iastore
+      96: aastore
+      97: dup
+      98: iconst_1
+      99: iconst_4
+     100: newarray       int
+     102: dup
+     103: iconst_0
+     104: iconst_m1
+     105: iastore
+     106: dup
+     107: iconst_1
+     108: iconst_0
+     109: iastore
+     110: dup
+     111: iconst_2
+     112: iconst_1
+     113: iastore
+     114: dup
+     115: iconst_3
+     116: iconst_1
+     117: iastore
+     118: aastore
+     119: dup
+     120: iconst_2
+     121: iconst_4
+     122: newarray       int
+     124: dup
+     125: iconst_0
+     126: iconst_1
+     127: iastore
+     128: dup
+     129: iconst_1
+     130: iconst_0
+     131: iastore
+     132: dup
+     133: iconst_2
+     134: iconst_1
+     135: iastore
+     136: dup
+     137: iconst_3
+     138: iconst_1
+     139: iastore
+     140: aastore
+     141: dup
+     142: iconst_3
+     143: iconst_4
+     144: newarray       int
+     146: dup
+     147: iconst_0
+     148: iconst_0
+     149: iastore
+     150: dup
+     151: iconst_1
+     152: iconst_m1
+     153: iastore
+     154: dup
+     155: iconst_2
+     156: iconst_1
+     157: iastore
+     158: dup
+     159: iconst_3
+     160: iconst_1
+     161: iastore
+     162: aastore
+     163: dup
+     164: iconst_4
+     165: iconst_4
+     166: newarray       int
+     168: dup
+     169: iconst_0
+     170: iconst_0
+     171: iastore
+     172: dup
+     173: iconst_1
+     174: iconst_1
+     175: iastore
+     176: dup
+     177: iconst_2
+     178: iconst_1
+     179: iastore
+     180: dup
+     181: iconst_3
+     182: iconst_1
+     183: iastore
+     184: aastore
+     185: goto          394
+     188: bipush        9
+     190: anewarray     #519                // class "[I"
+     193: dup
+     194: iconst_0
+     195: iconst_4
+     196: newarray       int
+     198: dup
+     199: iconst_0
+     200: iconst_m1
+     201: iastore
+     202: dup
+     203: iconst_1
+     204: iconst_m1
+     205: iastore
+     206: dup
+     207: iconst_2
+     208: iconst_1
+     209: iastore
+     210: dup
+     211: iconst_3
+     212: iconst_1
+     213: iastore
+     214: aastore
+     215: dup
+     216: iconst_1
+     217: iconst_4
+     218: newarray       int
+     220: dup
+     221: iconst_0
+     222: iconst_0
+     223: iastore
+     224: dup
+     225: iconst_1
+     226: iconst_m1
+     227: iastore
+     228: dup
+     229: iconst_2
+     230: iconst_1
+     231: iastore
+     232: dup
+     233: iconst_3
+     234: iconst_1
+     235: iastore
+     236: aastore
+     237: dup
+     238: iconst_2
+     239: iconst_4
+     240: newarray       int
+     242: dup
+     243: iconst_0
+     244: iconst_1
+     245: iastore
+     246: dup
+     247: iconst_1
+     248: iconst_m1
+     249: iastore
+     250: dup
+     251: iconst_2
+     252: iconst_1
+     253: iastore
+     254: dup
+     255: iconst_3
+     256: iconst_1
+     257: iastore
+     258: aastore
+     259: dup
+     260: iconst_3
+     261: iconst_4
+     262: newarray       int
+     264: dup
+     265: iconst_0
+     266: iconst_m1
+     267: iastore
+     268: dup
+     269: iconst_1
+     270: iconst_0
+     271: iastore
+     272: dup
+     273: iconst_2
+     274: iconst_1
+     275: iastore
+     276: dup
+     277: iconst_3
+     278: iconst_1
+     279: iastore
+     280: aastore
+     281: dup
+     282: iconst_4
+     283: iconst_4
+     284: newarray       int
+     286: dup
+     287: iconst_0
+     288: iconst_0
+     289: iastore
+     290: dup
+     291: iconst_1
+     292: iconst_0
+     293: iastore
+     294: dup
+     295: iconst_2
+     296: iconst_1
+     297: iastore
+     298: dup
+     299: iconst_3
+     300: iconst_1
+     301: iastore
+     302: aastore
+     303: dup
+     304: iconst_5
+     305: iconst_4
+     306: newarray       int
+     308: dup
+     309: iconst_0
+     310: iconst_1
+     311: iastore
+     312: dup
+     313: iconst_1
+     314: iconst_0
+     315: iastore
+     316: dup
+     317: iconst_2
+     318: iconst_1
+     319: iastore
+     320: dup
+     321: iconst_3
+     322: iconst_1
+     323: iastore
+     324: aastore
+     325: dup
+     326: bipush        6
+     328: iconst_4
+     329: newarray       int
+     331: dup
+     332: iconst_0
+     333: iconst_m1
+     334: iastore
+     335: dup
+     336: iconst_1
+     337: iconst_1
+     338: iastore
+     339: dup
+     340: iconst_2
+     341: iconst_1
+     342: iastore
+     343: dup
+     344: iconst_3
+     345: iconst_1
+     346: iastore
+     347: aastore
+     348: dup
+     349: bipush        7
+     351: iconst_4
+     352: newarray       int
+     354: dup
+     355: iconst_0
+     356: iconst_0
+     357: iastore
+     358: dup
+     359: iconst_1
+     360: iconst_1
+     361: iastore
+     362: dup
+     363: iconst_2
+     364: iconst_1
+     365: iastore
+     366: dup
+     367: iconst_3
+     368: iconst_1
+     369: iastore
+     370: aastore
+     371: dup
+     372: bipush        8
+     374: iconst_4
+     375: newarray       int
+     377: dup
+     378: iconst_0
+     379: iconst_1
+     380: iastore
+     381: dup
+     382: iconst_1
+     383: iconst_1
+     384: iastore
+     385: dup
+     386: iconst_2
+     387: iconst_1
+     388: iastore
+     389: dup
+     390: iconst_3
+     391: iconst_1
+     392: iastore
+     393: aastore
+     394: areturn
+
+  public int[][] getToolOffsets();
+    Code:
+       0: aload_0
+       1: invokevirtual #728                // Method getToolOffsetsWithDamage:()[[I
+       4: astore_1
+       5: aload_1
+       6: arraylength
+       7: iconst_2
+       8: multianewarray #312,  2           // class "[[I"
+      12: astore_2
+      13: iconst_0
+      14: istore_3
+      15: iload_3
+      16: aload_1
+      17: arraylength
+      18: if_icmpge     47
+      21: aload_2
+      22: iload_3
+      23: aaload
+      24: iconst_0
+      25: aload_1
+      26: iload_3
+      27: aaload
+      28: iconst_0
+      29: iaload
+      30: iastore
+      31: aload_2
+      32: iload_3
+      33: aaload
+      34: iconst_1
+      35: aload_1
+      36: iload_3
+      37: aaload
+      38: iconst_1
+      39: iaload
+      40: iastore
+      41: iinc          3, 1
+      44: goto          15
+      47: aload_2
+      48: areturn
+
+  public int getWidth();
+    Code:
+       0: aload_0
+       1: getfield      #286                // Field width:I
+       4: ireturn
+
+  public int getHeight();
+    Code:
+       0: aload_0
+       1: getfield      #288                // Field height:I
+       4: ireturn
+
+  public int getStoneHealth(int, int);
+    Code:
+       0: iload_1
+       1: iflt          35
+       4: iload_1
+       5: aload_0
+       6: getfield      #286                // Field width:I
+       9: if_icmpge     35
+      12: iload_2
+      13: iflt          35
+      16: iload_2
+      17: aload_0
+      18: getfield      #288                // Field height:I
+      21: if_icmpge     35
+      24: aload_0
+      25: getfield      #290                // Field stoneHealth:[[I
+      28: iload_2
+      29: aaload
+      30: iload_1
+      31: iaload
+      32: goto          36
+      35: iconst_0
+      36: ireturn
+
+  public int getDirtHealth(int, int);
+    Code:
+       0: iload_1
+       1: iflt          35
+       4: iload_1
+       5: aload_0
+       6: getfield      #286                // Field width:I
+       9: if_icmpge     35
+      12: iload_2
+      13: iflt          35
+      16: iload_2
+      17: aload_0
+      18: getfield      #288                // Field height:I
+      21: if_icmpge     35
+      24: aload_0
+      25: getfield      #292                // Field dirtHealth:[[I
+      28: iload_2
+      29: aaload
+      30: iload_1
+      31: iaload
+      32: goto          36
+      35: iconst_0
+      36: ireturn
+
+  public boolean hasBedrock(int, int);
+    Code:
+       0: iload_1
+       1: iflt          39
+       4: iload_1
+       5: aload_0
+       6: getfield      #286                // Field width:I
+       9: if_icmpge     39
+      12: iload_2
+      13: iflt          39
+      16: iload_2
+      17: aload_0
+      18: getfield      #288                // Field height:I
+      21: if_icmpge     39
+      24: aload_0
+      25: getfield      #294                // Field hasBedrock:[[Z
+      28: iload_2
+      29: aaload
+      30: iload_1
+      31: baload
+      32: ifeq          39
+      35: iconst_1
+      36: goto          40
+      39: iconst_0
+      40: ireturn
+
+  public int getStabilityRemaining();
+    Code:
+       0: aload_0
+       1: getfield      #296                // Field stabilityRemaining:I
+       4: ireturn
+
+  public int getMaxStability();
+    Code:
+       0: aload_0
+       1: getfield      #298                // Field maxStability:I
+       4: ireturn
+
+  public boolean isGameOver();
+    Code:
+       0: aload_0
+       1: getfield      #373                // Field gameOver:Z
+       4: ireturn
+
+  public boolean hasWon();
+    Code:
+       0: aload_0
+       1: getfield      #375                // Field won:Z
+       4: ireturn
+
+  public void forceGameOver();
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #373                // Field gameOver:Z
+       5: aload_0
+       6: iconst_0
+       7: putfield      #375                // Field won:Z
+      10: return
+
+  public java.util.List<net.minecraft.class_1799> getCollectedItemStacks();
+    Code:
+       0: aload_0
+       1: getfield      #138                // Field collectedItemStacks:Ljava/util/List;
+       4: invokestatic  #748                // Method java/util/Collections.unmodifiableList:(Ljava/util/List;)Ljava/util/List;
+       7: areturn
+
+  public java.util.Map<net.minecraft.class_1792, java.lang.Integer> getCollectedItems();
+    Code:
+       0: new           #754                // class java/util/HashMap
+       3: dup
+       4: invokespecial #755                // Method java/util/HashMap."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: getfield      #138                // Field collectedItemStacks:Ljava/util/List;
+      12: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      17: astore_2
+      18: aload_2
+      19: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      24: ifeq          63
+      27: aload_2
+      28: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      33: checkcast     #622                // class net/minecraft/class_1799
+      36: astore_3
+      37: aload_1
+      38: aload_3
+      39: invokevirtual #626                // Method net/minecraft/class_1799.method_7909:()Lnet/minecraft/class_1792;
+      42: aload_3
+      43: invokevirtual #760                // Method net/minecraft/class_1799.method_7947:()I
+      46: invokestatic  #765                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      49: invokedynamic #777,  0            // InvokeDynamic #2:apply:()Ljava/util/function/BiFunction;
+      54: invokeinterface #781,  4          // InterfaceMethod java/util/Map.merge:(Ljava/lang/Object;Ljava/lang/Object;Ljava/util/function/BiFunction;)Ljava/lang/Object;
+      59: pop
+      60: goto          18
+      63: aload_1
+      64: areturn
+
+  public java.util.List<handyfon.pickaxeminigame.MiningGrid$HiddenTreasure> getTreasures();
+    Code:
+       0: aload_0
+       1: getfield      #136                // Field treasures:Ljava/util/List;
+       4: areturn
+
+  public boolean isValidTile(int, int);
+    Code:
+       0: iload_1
+       1: iflt          28
+       4: iload_1
+       5: aload_0
+       6: getfield      #286                // Field width:I
+       9: if_icmpge     28
+      12: iload_2
+      13: iflt          28
+      16: iload_2
+      17: aload_0
+      18: getfield      #288                // Field height:I
+      21: if_icmpge     28
+      24: iconst_1
+      25: goto          29
+      28: iconst_0
+      29: ireturn
+
+  public handyfon.pickaxeminigame.MiningGrid$GridSize getGridSize();
+    Code:
+       0: aload_0
+       1: getfield      #153                // Field currentGridSize:Lhandyfon/pickaxeminigame/MiningGrid$GridSize;
+       4: areturn
+
+  public boolean isSuperStable();
+    Code:
+       0: aload_0
+       1: getfield      #155                // Field isSuperStable:Z
+       4: ireturn
+
+  public handyfon.pickaxeminigame.MiningSettingsConfig$EffectiveSettings getEffectiveSettings();
+    Code:
+       0: aload_0
+       1: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+       4: areturn
+
+  public boolean explodeTnt(int, int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: iload_2
+       3: invokevirtual #797                // Method isValidTile:(II)Z
+       6: ifeq          16
+       9: aload_0
+      10: getfield      #373                // Field gameOver:Z
+      13: ifeq          18
+      16: iconst_0
+      17: ireturn
+      18: aload_0
+      19: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      22: ifnull        35
+      25: aload_0
+      26: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+      29: getfield      #365                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.tntStabilityCost:I
+      32: goto          37
+      35: bipush        35
+      37: istore_3
+      38: aload_0
+      39: dup
+      40: getfield      #296                // Field stabilityRemaining:I
+      43: iload_3
+      44: isub
+      45: putfield      #296                // Field stabilityRemaining:I
+      48: iconst_m1
+      49: istore        4
+      51: iload         4
+      53: iconst_1
+      54: if_icmpgt     210
+      57: iconst_m1
+      58: istore        5
+      60: iload         5
+      62: iconst_1
+      63: if_icmpgt     204
+      66: iload_1
+      67: iload         5
+      69: iadd
+      70: istore        6
+      72: iload_2
+      73: iload         4
+      75: iadd
+      76: istore        7
+      78: aload_0
+      79: iload         6
+      81: iload         7
+      83: invokevirtual #797                // Method isValidTile:(II)Z
+      86: ifeq          198
+      89: aload_0
+      90: getfield      #294                // Field hasBedrock:[[Z
+      93: iload         7
+      95: aaload
+      96: iload         6
+      98: baload
+      99: ifne          198
+     102: iconst_0
+     103: istore        8
+     105: iload         8
+     107: iconst_3
+     108: if_icmpge     198
+     111: aload_0
+     112: getfield      #290                // Field stoneHealth:[[I
+     115: iload         7
+     117: aaload
+     118: iload         6
+     120: iaload
+     121: ifle          153
+     124: aload_0
+     125: getfield      #290                // Field stoneHealth:[[I
+     128: iload         7
+     130: aaload
+     131: iload         6
+     133: iconst_0
+     134: aload_0
+     135: getfield      #290                // Field stoneHealth:[[I
+     138: iload         7
+     140: aaload
+     141: iload         6
+     143: iaload
+     144: iconst_2
+     145: isub
+     146: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     149: iastore
+     150: goto          192
+     153: aload_0
+     154: getfield      #292                // Field dirtHealth:[[I
+     157: iload         7
+     159: aaload
+     160: iload         6
+     162: iaload
+     163: ifle          198
+     166: aload_0
+     167: getfield      #292                // Field dirtHealth:[[I
+     170: iload         7
+     172: aaload
+     173: iload         6
+     175: iconst_0
+     176: aload_0
+     177: getfield      #292                // Field dirtHealth:[[I
+     180: iload         7
+     182: aaload
+     183: iload         6
+     185: iaload
+     186: iconst_2
+     187: isub
+     188: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     191: iastore
+     192: iinc          8, 1
+     195: goto          105
+     198: iinc          5, 1
+     201: goto          60
+     204: iinc          4, 1
+     207: goto          51
+     210: bipush        -2
+     212: istore        4
+     214: iload         4
+     216: iconst_2
+     217: if_icmpgt     395
+     220: bipush        -2
+     222: istore        5
+     224: iload         5
+     226: iconst_2
+     227: if_icmpgt     389
+     230: iload         5
+     232: invokestatic  #800                // Method java/lang/Math.abs:(I)I
+     235: iconst_1
+     236: if_icmpgt     251
+     239: iload         4
+     241: invokestatic  #800                // Method java/lang/Math.abs:(I)I
+     244: iconst_1
+     245: if_icmpgt     251
+     248: goto          383
+     251: iload_1
+     252: iload         5
+     254: iadd
+     255: istore        6
+     257: iload_2
+     258: iload         4
+     260: iadd
+     261: istore        7
+     263: aload_0
+     264: iload         6
+     266: iload         7
+     268: invokevirtual #797                // Method isValidTile:(II)Z
+     271: ifeq          383
+     274: aload_0
+     275: getfield      #294                // Field hasBedrock:[[Z
+     278: iload         7
+     280: aaload
+     281: iload         6
+     283: baload
+     284: ifne          383
+     287: iconst_0
+     288: istore        8
+     290: iload         8
+     292: iconst_2
+     293: if_icmpge     383
+     296: aload_0
+     297: getfield      #290                // Field stoneHealth:[[I
+     300: iload         7
+     302: aaload
+     303: iload         6
+     305: iaload
+     306: ifle          338
+     309: aload_0
+     310: getfield      #290                // Field stoneHealth:[[I
+     313: iload         7
+     315: aaload
+     316: iload         6
+     318: iconst_0
+     319: aload_0
+     320: getfield      #290                // Field stoneHealth:[[I
+     323: iload         7
+     325: aaload
+     326: iload         6
+     328: iaload
+     329: iconst_2
+     330: isub
+     331: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     334: iastore
+     335: goto          377
+     338: aload_0
+     339: getfield      #292                // Field dirtHealth:[[I
+     342: iload         7
+     344: aaload
+     345: iload         6
+     347: iaload
+     348: ifle          383
+     351: aload_0
+     352: getfield      #292                // Field dirtHealth:[[I
+     355: iload         7
+     357: aaload
+     358: iload         6
+     360: iconst_0
+     361: aload_0
+     362: getfield      #292                // Field dirtHealth:[[I
+     365: iload         7
+     367: aaload
+     368: iload         6
+     370: iaload
+     371: iconst_2
+     372: isub
+     373: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     376: iastore
+     377: iinc          8, 1
+     380: goto          290
+     383: iinc          5, 1
+     386: goto          224
+     389: iinc          4, 1
+     392: goto          214
+     395: bipush        -3
+     397: istore        4
+     399: iload         4
+     401: iconst_3
+     402: if_icmpgt     579
+     405: bipush        -3
+     407: istore        5
+     409: iload         5
+     411: iconst_3
+     412: if_icmpgt     573
+     415: iload         5
+     417: invokestatic  #800                // Method java/lang/Math.abs:(I)I
+     420: iconst_2
+     421: if_icmpgt     436
+     424: iload         4
+     426: invokestatic  #800                // Method java/lang/Math.abs:(I)I
+     429: iconst_2
+     430: if_icmpgt     436
+     433: goto          567
+     436: iload_1
+     437: iload         5
+     439: iadd
+     440: istore        6
+     442: iload_2
+     443: iload         4
+     445: iadd
+     446: istore        7
+     448: aload_0
+     449: iload         6
+     451: iload         7
+     453: invokevirtual #797                // Method isValidTile:(II)Z
+     456: ifeq          567
+     459: aload_0
+     460: getfield      #294                // Field hasBedrock:[[Z
+     463: iload         7
+     465: aaload
+     466: iload         6
+     468: baload
+     469: ifne          567
+     472: iconst_1
+     473: aload_0
+     474: getfield      #143                // Field random:Ljava/util/Random;
+     477: iconst_3
+     478: invokevirtual #408                // Method java/util/Random.nextInt:(I)I
+     481: iadd
+     482: istore        8
+     484: aload_0
+     485: getfield      #290                // Field stoneHealth:[[I
+     488: iload         7
+     490: aaload
+     491: iload         6
+     493: iaload
+     494: ifle          527
+     497: aload_0
+     498: getfield      #290                // Field stoneHealth:[[I
+     501: iload         7
+     503: aaload
+     504: iload         6
+     506: iconst_0
+     507: aload_0
+     508: getfield      #290                // Field stoneHealth:[[I
+     511: iload         7
+     513: aaload
+     514: iload         6
+     516: iaload
+     517: iload         8
+     519: isub
+     520: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     523: iastore
+     524: goto          567
+     527: aload_0
+     528: getfield      #292                // Field dirtHealth:[[I
+     531: iload         7
+     533: aaload
+     534: iload         6
+     536: iaload
+     537: ifle          567
+     540: aload_0
+     541: getfield      #292                // Field dirtHealth:[[I
+     544: iload         7
+     546: aaload
+     547: iload         6
+     549: iconst_0
+     550: aload_0
+     551: getfield      #292                // Field dirtHealth:[[I
+     554: iload         7
+     556: aaload
+     557: iload         6
+     559: iaload
+     560: iload         8
+     562: isub
+     563: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     566: iastore
+     567: iinc          5, 1
+     570: goto          409
+     573: iinc          4, 1
+     576: goto          399
+     579: aload_0
+     580: invokevirtual #803                // Method isAllTreasuresRevealed:()Z
+     583: ifeq          599
+     586: aload_0
+     587: iconst_1
+     588: putfield      #373                // Field gameOver:Z
+     591: aload_0
+     592: iconst_1
+     593: putfield      #375                // Field won:Z
+     596: goto          616
+     599: aload_0
+     600: getfield      #296                // Field stabilityRemaining:I
+     603: ifgt          616
+     606: aload_0
+     607: iconst_1
+     608: putfield      #373                // Field gameOver:Z
+     611: aload_0
+     612: iconst_0
+     613: putfield      #375                // Field won:Z
+     616: iconst_1
+     617: ireturn
+
+  public boolean hitTile(int, int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: iload_2
+       3: invokevirtual #797                // Method isValidTile:(II)Z
+       6: ifeq          16
+       9: aload_0
+      10: getfield      #373                // Field gameOver:Z
+      13: ifeq          18
+      16: iconst_0
+      17: ireturn
+      18: aload_0
+      19: getstatic     #178                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.NONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+      22: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+      25: iconst_0
+      26: istore_3
+      27: iconst_0
+      28: istore        4
+      30: aload_0
+      31: invokevirtual #728                // Method getToolOffsetsWithDamage:()[[I
+      34: astore        5
+      36: aload         5
+      38: arraylength
+      39: istore        6
+      41: iconst_0
+      42: istore        7
+      44: iload         7
+      46: iload         6
+      48: if_icmpge     383
+      51: aload         5
+      53: iload         7
+      55: aaload
+      56: astore        8
+      58: iload_1
+      59: aload         8
+      61: iconst_0
+      62: iaload
+      63: iadd
+      64: istore        9
+      66: iload_2
+      67: aload         8
+      69: iconst_1
+      70: iaload
+      71: iadd
+      72: istore        10
+      74: aload         8
+      76: iconst_2
+      77: iaload
+      78: istore        11
+      80: aload         8
+      82: iconst_3
+      83: iaload
+      84: istore        12
+      86: aload_0
+      87: iload         9
+      89: iload         10
+      91: invokevirtual #797                // Method isValidTile:(II)Z
+      94: ifeq          377
+      97: aload_0
+      98: getfield      #294                // Field hasBedrock:[[Z
+     101: iload         10
+     103: aaload
+     104: iload         9
+     106: baload
+     107: ifeq          161
+     110: iconst_1
+     111: istore        4
+     113: aload_0
+     114: getfield      #290                // Field stoneHealth:[[I
+     117: iload         10
+     119: aaload
+     120: iload         9
+     122: iaload
+     123: ifne          161
+     126: aload_0
+     127: getfield      #292                // Field dirtHealth:[[I
+     130: iload         10
+     132: aaload
+     133: iload         9
+     135: iaload
+     136: ifne          161
+     139: aload_0
+     140: getfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     143: getstatic     #812                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.REVEAL_ITEM:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     146: if_acmpeq     156
+     149: aload_0
+     150: getstatic     #815                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.BEDROCK:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     153: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     156: iconst_1
+     157: istore_3
+     158: goto          377
+     161: aload_0
+     162: getfield      #290                // Field stoneHealth:[[I
+     165: iload         10
+     167: aaload
+     168: iload         9
+     170: iaload
+     171: ifle          282
+     174: aload_0
+     175: getfield      #290                // Field stoneHealth:[[I
+     178: iload         10
+     180: aaload
+     181: iload         9
+     183: iconst_0
+     184: aload_0
+     185: getfield      #290                // Field stoneHealth:[[I
+     188: iload         10
+     190: aaload
+     191: iload         9
+     193: iaload
+     194: iload         11
+     196: isub
+     197: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     200: iastore
+     201: iconst_1
+     202: istore_3
+     203: aload_0
+     204: getfield      #290                // Field stoneHealth:[[I
+     207: iload         10
+     209: aaload
+     210: iload         9
+     212: iaload
+     213: ifne          252
+     216: aload_0
+     217: getfield      #292                // Field dirtHealth:[[I
+     220: iload         10
+     222: aaload
+     223: iload         9
+     225: iaload
+     226: ifne          252
+     229: aload_0
+     230: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     233: iload         10
+     235: aaload
+     236: iload         9
+     238: aaload
+     239: ifnull        252
+     242: aload_0
+     243: getstatic     #812                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.REVEAL_ITEM:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     246: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     249: goto          377
+     252: aload_0
+     253: getfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     256: getstatic     #178                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.NONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     259: if_acmpeq     272
+     262: aload_0
+     263: getfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     266: getstatic     #818                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.DIRT:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     269: if_acmpne     377
+     272: aload_0
+     273: getstatic     #821                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.STONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     276: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     279: goto          377
+     282: aload_0
+     283: getfield      #292                // Field dirtHealth:[[I
+     286: iload         10
+     288: aaload
+     289: iload         9
+     291: iaload
+     292: ifle          377
+     295: aload_0
+     296: getfield      #292                // Field dirtHealth:[[I
+     299: iload         10
+     301: aaload
+     302: iload         9
+     304: iconst_0
+     305: aload_0
+     306: getfield      #292                // Field dirtHealth:[[I
+     309: iload         10
+     311: aaload
+     312: iload         9
+     314: iaload
+     315: iload         12
+     317: isub
+     318: invokestatic  #524                // Method java/lang/Math.max:(II)I
+     321: iastore
+     322: iconst_1
+     323: istore_3
+     324: aload_0
+     325: getfield      #292                // Field dirtHealth:[[I
+     328: iload         10
+     330: aaload
+     331: iload         9
+     333: iaload
+     334: ifne          360
+     337: aload_0
+     338: getfield      #307                // Field hiddenItems:[[Lnet/minecraft/class_1792;
+     341: iload         10
+     343: aaload
+     344: iload         9
+     346: aaload
+     347: ifnull        360
+     350: aload_0
+     351: getstatic     #812                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.REVEAL_ITEM:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     354: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     357: goto          377
+     360: aload_0
+     361: getfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     364: getstatic     #178                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.NONE:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     367: if_acmpne     377
+     370: aload_0
+     371: getstatic     #818                // Field handyfon/pickaxeminigame/MiningGrid$HitFeedback.DIRT:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     374: putfield      #180                // Field lastHitFeedback:Lhandyfon/pickaxeminigame/MiningGrid$HitFeedback;
+     377: iinc          7, 1
+     380: goto          44
+     383: iload_3
+     384: ifeq          433
+     387: aload_0
+     388: getfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+     391: getfield      #824                // Field handyfon/pickaxeminigame/MiningGrid$Tool.stabilityCost:I
+     394: istore        5
+     396: aload_0
+     397: getfield      #148                // Field currentTool:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+     400: getstatic     #827                // Field handyfon/pickaxeminigame/MiningGrid$Tool.BRUSH:Lhandyfon/pickaxeminigame/MiningGrid$Tool;
+     403: if_acmpne     422
+     406: aload_0
+     407: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     410: ifnull        422
+     413: aload_0
+     414: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     417: getfield      #363                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.brushStabilityCost:I
+     420: istore        5
+     422: aload_0
+     423: dup
+     424: getfield      #296                // Field stabilityRemaining:I
+     427: iload         5
+     429: isub
+     430: putfield      #296                // Field stabilityRemaining:I
+     433: iload         4
+     435: ifeq          464
+     438: aload_0
+     439: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     442: ifnull        464
+     445: aload_0
+     446: dup
+     447: getfield      #296                // Field stabilityRemaining:I
+     450: aload_0
+     451: getfield      #204                // Field effectiveSettings:Lhandyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings;
+     454: getfield      #830                // Field handyfon/pickaxeminigame/MiningSettingsConfig$EffectiveSettings.bedrockStabilityPenalty:I
+     457: isub
+     458: putfield      #296                // Field stabilityRemaining:I
+     461: goto          479
+     464: iload         4
+     466: ifeq          479
+     469: aload_0
+     470: dup
+     471: getfield      #296                // Field stabilityRemaining:I
+     474: iconst_2
+     475: isub
+     476: putfield      #296                // Field stabilityRemaining:I
+     479: aload_0
+     480: invokevirtual #803                // Method isAllTreasuresRevealed:()Z
+     483: ifeq          499
+     486: aload_0
+     487: iconst_1
+     488: putfield      #373                // Field gameOver:Z
+     491: aload_0
+     492: iconst_1
+     493: putfield      #375                // Field won:Z
+     496: goto          516
+     499: aload_0
+     500: getfield      #296                // Field stabilityRemaining:I
+     503: ifgt          516
+     506: aload_0
+     507: iconst_1
+     508: putfield      #373                // Field gameOver:Z
+     511: aload_0
+     512: iconst_0
+     513: putfield      #375                // Field won:Z
+     516: iload_3
+     517: ireturn
+
+  public boolean checkAndCollectTreasures();
+    Code:
+       0: iconst_0
+       1: istore_1
+       2: aload_0
+       3: getfield      #136                // Field treasures:Ljava/util/List;
+       6: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      11: astore_2
+      12: aload_2
+      13: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      18: ifeq          98
+      21: aload_2
+      22: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      27: checkcast     #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+      30: astore_3
+      31: aload_0
+      32: getfield      #131                // Field collectedTreasures:Ljava/util/Set;
+      35: aload_3
+      36: invokeinterface #839,  2          // InterfaceMethod java/util/Set.contains:(Ljava/lang/Object;)Z
+      41: ifne          95
+      44: aload_0
+      45: aload_3
+      46: invokevirtual #843                // Method isTreasureFullyRevealed:(Lhandyfon/pickaxeminigame/MiningGrid$HiddenTreasure;)Z
+      49: ifeq          95
+      52: aload_0
+      53: getfield      #131                // Field collectedTreasures:Ljava/util/Set;
+      56: aload_3
+      57: invokeinterface #844,  2          // InterfaceMethod java/util/Set.add:(Ljava/lang/Object;)Z
+      62: pop
+      63: aload_3
+      64: getfield      #846                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.itemStack:Lnet/minecraft/class_1799;
+      67: invokevirtual #849                // Method net/minecraft/class_1799.method_7972:()Lnet/minecraft/class_1799;
+      70: astore        4
+      72: aload         4
+      74: aload_3
+      75: getfield      #852                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.yieldAmount:I
+      78: invokevirtual #856                // Method net/minecraft/class_1799.method_7939:(I)V
+      81: aload_0
+      82: getfield      #138                // Field collectedItemStacks:Ljava/util/List;
+      85: aload         4
+      87: invokeinterface #646,  2          // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      92: pop
+      93: iconst_1
+      94: istore_1
+      95: goto          12
+      98: iload_1
+      99: ireturn
+
+  private boolean isAllTreasuresRevealed();
+    Code:
+       0: aload_0
+       1: getfield      #136                // Field treasures:Ljava/util/List;
+       4: invokeinterface #311,  1          // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+       9: astore_1
+      10: aload_1
+      11: invokeinterface #318,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      16: ifeq          42
+      19: aload_1
+      20: invokeinterface #322,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      25: checkcast     #7                  // class handyfon/pickaxeminigame/MiningGrid$HiddenTreasure
+      28: astore_2
+      29: aload_0
+      30: aload_2
+      31: invokevirtual #843                // Method isTreasureFullyRevealed:(Lhandyfon/pickaxeminigame/MiningGrid$HiddenTreasure;)Z
+      34: ifne          39
+      37: iconst_0
+      38: ireturn
+      39: goto          10
+      42: iconst_1
+      43: ireturn
+
+  public boolean isTreasureFullyRevealed(handyfon.pickaxeminigame.MiningGrid$HiddenTreasure);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: iload_2
+       3: aload_1
+       4: getfield      #323                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.height:I
+       7: if_icmpge     76
+      10: iconst_0
+      11: istore_3
+      12: iload_3
+      13: aload_1
+      14: getfield      #324                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.width:I
+      17: if_icmpge     70
+      20: aload_0
+      21: getfield      #290                // Field stoneHealth:[[I
+      24: aload_1
+      25: getfield      #327                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.y:I
+      28: iload_2
+      29: iadd
+      30: aaload
+      31: aload_1
+      32: getfield      #330                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.x:I
+      35: iload_3
+      36: iadd
+      37: iaload
+      38: ifgt          62
+      41: aload_0
+      42: getfield      #292                // Field dirtHealth:[[I
+      45: aload_1
+      46: getfield      #327                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.y:I
+      49: iload_2
+      50: iadd
+      51: aaload
+      52: aload_1
+      53: getfield      #330                // Field handyfon/pickaxeminigame/MiningGrid$HiddenTreasure.x:I
+      56: iload_3
+      57: iadd
+      58: iaload
+      59: ifle          64
+      62: iconst_0
+      63: ireturn
+      64: iinc          3, 1
+      67: goto          12
+      70: iinc          2, 1
+      73: goto          2
+      76: iconst_1
+      77: ireturn
+
+  private float calculateEffectiveModifier(handyfon.pickaxeminigame.MiningType, net.minecraft.class_2338);
+    Code:
+       0: aload_1
+       1: getfield      #860                // Field handyfon/pickaxeminigame/MiningType.rarityModifier:F
+       4: fstore_3
+       5: aload_1
+       6: getstatic     #862                // Field handyfon/pickaxeminigame/MiningType.STONE:Lhandyfon/pickaxeminigame/MiningType;
+       9: if_acmpeq     19
+      12: aload_1
+      13: getstatic     #865                // Field handyfon/pickaxeminigame/MiningType.DEEPSLATE:Lhandyfon/pickaxeminigame/MiningType;
+      16: if_acmpne     75
+      19: aload_2
+      20: invokevirtual #188                // Method net/minecraft/class_2338.method_10264:()I
+      23: bipush        10
+      25: if_icmpge     37
+      28: fload_3
+      29: ldc_w         #866                // float 0.5f
+      32: fadd
+      33: fstore_3
+      34: goto          75
+      37: aload_2
+      38: invokevirtual #188                // Method net/minecraft/class_2338.method_10264:()I
+      41: bipush        64
+      43: if_icmple     75
+      46: fconst_0
+      47: aload_2
+      48: invokevirtual #188                // Method net/minecraft/class_2338.method_10264:()I
+      51: bipush        64
+      53: isub
+      54: i2f
+      55: ldc_w         #867                // float 128.0f
+      58: fdiv
+      59: invokestatic  #463                // Method java/lang/Math.max:(FF)F
+      62: fstore        4
+      64: fload_3
+      65: ldc_w         #868                // float 0.3f
+      68: fload         4
+      70: invokestatic  #463                // Method java/lang/Math.max:(FF)F
+      73: fsub
+      74: fstore_3
+      75: fload_3
+      76: freturn
+
+  private boolean lambda$placeTreasureFromConfig$0(handyfon.pickaxeminigame.MiningLootConfig$TreasureEntry);
+    Code:
+       0: aload_1
+       1: aload_0
+       2: getfield      #192                // Field dimensionId:Ljava/lang/String;
+       5: aload_0
+       6: getfield      #190                // Field blockY:I
+       9: invokevirtual #874                // Method handyfon/pickaxeminigame/MiningLootConfig$TreasureEntry.isAvailable:(Ljava/lang/String;I)Z
+      12: ireturn
+}

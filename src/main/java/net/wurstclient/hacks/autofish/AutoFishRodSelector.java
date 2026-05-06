@@ -137,9 +137,9 @@ public final class AutoFishRodSelector
 			return -1;
 		
 		boolean isRod = stack.getItem() instanceof FishingRodItem
-			|| stack.getItem() instanceof PokerodItem
-			|| stack.getItem().getClass().getName().contains("TideFishingRodItem");
-			
+			|| stack.getItem() instanceof PokerodItem || stack.getItem()
+				.getClass().getName().contains("TideFishingRodItem");
+		
 		if(!isRod)
 			return -1;
 		

@@ -7,6 +7,7 @@
  */
 package net.wurstclient.hacks;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -60,6 +61,17 @@ public final class AutoMiningHack extends Hack
 	private final CheckboxSetting avoidBedrock = new CheckboxSetting(
 		"Avoid Bedrock", "Never hit bedrock tiles to save stability.", true);
 	
+	private final CheckboxSetting instantLoot =
+		new CheckboxSetting("Instant Loot",
+			"Sends a packet to claim ALL treasures instantly without mining."
+				+ " 100% loot, 0% risk.",
+			false);
+	
+	private final SliderSetting instantLootDelay =
+		new SliderSetting("Instant Loot Delay",
+			"Seconds to wait before sending the claim packet.", 1.0, 0.0, 5.0,
+			0.1, ValueDisplay.DECIMAL);
+	
 	private final CheckboxSetting continuousDrop =
 		new CheckboxSetting("Continuous Drop",
 			"Automatically drops unwanted items whenever they are picked up.",
@@ -89,6 +101,8 @@ public final class AutoMiningHack extends Hack
 	private long lastDropTime;
 	private int cooldown;
 	private boolean wasInGame;
+	private Screen lastInstantLootScreen;
+	private long instantLootScreenOpenTime;
 	
 	private final Map<String, CheckboxSetting> masterFilters =
 		new LinkedHashMap<>();
@@ -123,6 +137,11 @@ public final class AutoMiningHack extends Hack
 	private Field treasureItemField;
 	private Field treasureRarityField;
 	
+	private Field screenSessionIdField;
+	private Field screenItemsGivenField;
+	private Field gameOverField;
+	private Field wonField;
+	
 	private Object toolPickaxe;
 	private Object toolHammer;
 	
@@ -130,6 +149,8 @@ public final class AutoMiningHack extends Hack
 	{
 		super("AutoMining");
 		setCategory(Category.OTHER);
+		addSetting(instantLoot);
+		addSetting(instantLootDelay);
 		addSetting(delay);
 		addSetting(stopAtStability);
 		addSetting(minStability);
@@ -259,6 +280,8 @@ public final class AutoMiningHack extends Hack
 	{
 		cooldown = 0;
 		wasInGame = false;
+		lastInstantLootScreen = null;
+		instantLootScreenOpenTime = 0;
 		dropPhase = DropPhase.IDLE;
 		dropQueue.clear();
 		EVENTS.add(UpdateListener.class, this);
@@ -308,6 +331,12 @@ public final class AutoMiningHack extends Hack
 		
 		if(!isInGame)
 			return;
+		
+		if(instantLoot.isChecked())
+		{
+			handleInstantLoot(screen);
+			return;
+		}
 		
 		try
 		{
@@ -711,6 +740,128 @@ public final class AutoMiningHack extends Hack
 		treasureItemField.setAccessible(true);
 		treasureRarityField = tc.getDeclaredField("rarity");
 		treasureRarityField.setAccessible(true);
+	}
+	
+	private void handleInstantLoot(Screen screen)
+	{
+		try
+		{
+			// Init itemsGiven field check
+			if(screenItemsGivenField == null)
+			{
+				screenItemsGivenField =
+					screen.getClass().getDeclaredField("itemsGiven");
+				screenItemsGivenField.setAccessible(true);
+			}
+			
+			if(screenItemsGivenField.getBoolean(screen))
+				return; // Already claimed
+				
+			// Track delay per screen instance
+			if(screen != lastInstantLootScreen)
+			{
+				lastInstantLootScreen = screen;
+				instantLootScreenOpenTime = System.currentTimeMillis();
+				return;
+			}
+			
+			long elapsed =
+				System.currentTimeMillis() - instantLootScreenOpenTime;
+			if(elapsed < instantLootDelay.getValue() * 1000)
+				return;
+			
+			// Get grid from screen
+			if(gridField == null)
+			{
+				gridField = screen.getClass().getDeclaredField("grid");
+				gridField.setAccessible(true);
+			}
+			Object grid = gridField.get(screen);
+			if(grid == null)
+				return;
+			
+			if(treasuresField == null)
+				initReflection(grid);
+			
+			// Get sessionId
+			if(screenSessionIdField == null)
+			{
+				screenSessionIdField =
+					screen.getClass().getDeclaredField("sessionId");
+				screenSessionIdField.setAccessible(true);
+			}
+			int sessionId = screenSessionIdField.getInt(screen);
+			
+			// Get all treasures
+			List<?> treasures = (List<?>)treasuresField.get(grid);
+			if(treasures == null || treasures.isEmpty())
+				return;
+			
+			// Build ALL indices
+			List<Integer> indices = new ArrayList<>();
+			for(int i = 0; i < treasures.size(); i++)
+				indices.add(i);
+			
+			// Create ClaimRewardPayload(sessionId, indices)
+			Class<?> payloadClass = Class.forName(
+				"handyfon.pickaxeminigame.Pickaxeminigame$ClaimRewardPayload");
+			Constructor<?> ctor =
+				payloadClass.getDeclaredConstructor(int.class, List.class);
+			ctor.setAccessible(true);
+			Object payload = ctor.newInstance(sessionId, indices);
+			
+			// Send via ClientPlayNetworking.send(payload)
+			Class<?> cpn =
+				Class.forName("net.fabricmc.fabric.api.client.networking.v1"
+					+ ".ClientPlayNetworking");
+			for(Method m : cpn.getMethods())
+			{
+				if(m.getName().equals("send") && m.getParameterCount() == 1
+					&& m.getParameterTypes()[0].isInstance(payload))
+				{
+					m.invoke(null, payload);
+					break;
+				}
+			}
+			
+			// Prevent screen's own giveItemsToPlayer from firing
+			screenItemsGivenField.setBoolean(screen, true);
+			
+			// Set grid as won so screen shows win state
+			if(gameOverField == null)
+			{
+				gameOverField = grid.getClass().getDeclaredField("gameOver");
+				gameOverField.setAccessible(true);
+			}
+			if(wonField == null)
+			{
+				wonField = grid.getClass().getDeclaredField("won");
+				wonField.setAccessible(true);
+			}
+			gameOverField.setBoolean(grid, true);
+			wonField.setBoolean(grid, true);
+			
+			// Zero out all tile health so treasures appear revealed
+			int[][] stoneHealth = (int[][])stoneHealthField.get(grid);
+			int[][] dirtHealth = (int[][])dirtHealthField.get(grid);
+			for(int y = 0; y < stoneHealth.length; y++)
+				for(int x = 0; x < stoneHealth[y].length; x++)
+				{
+					stoneHealth[y][x] = 0;
+					dirtHealth[y][x] = 0;
+				}
+			
+			// Mark all treasures as collected visually
+			@SuppressWarnings("unchecked")
+			Set<Object> collected =
+				(Set<Object>)collectedTreasuresField.get(grid);
+			for(Object t : treasures)
+				collected.add(t);
+			
+		}catch(Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	private boolean isMinigameScreen(Screen screen)

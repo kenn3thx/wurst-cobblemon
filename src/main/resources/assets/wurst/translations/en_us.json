@@ -61,6 +61,8 @@
   "description.wurst.setting.automining.min_stability": "Stop mining if wall stability is below this.",
   "description.wurst.setting.automining.auto_hammer": "Automatically uses the Hammer (3x3) for efficiency when safe.",
   "description.wurst.setting.automining.avoid_bedrock": "Never hit bedrock tiles to save stability.",
+  "description.wurst.setting.automining.instant_loot": "Sends a packet to claim ALL treasures instantly without mining. 100% loot, 0% risk.",
+  "description.wurst.setting.automining.instant_loot_delay": "Seconds to wait before sending the claim packet. Higher values look more natural.",
   "description.wurst.setting.automining.continuous_drop": "Automatically drops unwanted items whenever they enter your inventory, not just after mining.",
   "description.wurst.hack.cobblemininginteract": "Automatically interacts with sparkling mining nodes. Supports Snap (Instant), Smooth, and Silent modes.",
   "description.wurst.setting.cobblemininginteract.range": "Range to look for mining spots.",

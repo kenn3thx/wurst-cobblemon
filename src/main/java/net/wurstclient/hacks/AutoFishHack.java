@@ -258,9 +258,10 @@ public final class AutoFishHack extends Hack
 		
 		net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
 		return stack.is(Items.FISHING_ROD)
-			|| stack.getItem() instanceof net.minecraft.world.item.FishingRodItem
-			|| stack.getItem() instanceof PokerodItem
-			|| stack.getItem().getClass().getName().contains("TideFishingRodItem");
+			|| stack
+				.getItem() instanceof net.minecraft.world.item.FishingRodItem
+			|| stack.getItem() instanceof PokerodItem || stack.getItem()
+				.getClass().getName().contains("TideFishingRodItem");
 	}
 	
 	private enum BiteMode

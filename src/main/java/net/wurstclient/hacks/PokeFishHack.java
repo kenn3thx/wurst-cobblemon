@@ -248,8 +248,8 @@ public final class PokeFishHack extends Hack
 		ItemStack stack = player.getMainHandItem();
 		return stack.is(Items.FISHING_ROD)
 			|| stack.getItem() instanceof FishingRodItem
-			|| stack.getItem() instanceof PokerodItem
-			|| stack.getItem().getClass().getName().contains("TideFishingRodItem");
+			|| stack.getItem() instanceof PokerodItem || stack.getItem()
+				.getClass().getName().contains("TideFishingRodItem");
 	}
 	
 	private enum BiteMode

@@ -67,7 +67,8 @@ public final class AutoTideFishHack extends Hack
 				isActiveMethod = overlayClass.getDeclaredMethod("isActive");
 				isActiveMethod.setAccessible(true);
 				
-				getPositionMethod = overlayClass.getDeclaredMethod("getMinigamePosition");
+				getPositionMethod =
+					overlayClass.getDeclaredMethod("getMinigamePosition");
 				getPositionMethod.setAccessible(true);
 				
 				interactMethod = overlayClass.getDeclaredMethod("interact");
@@ -93,7 +94,8 @@ public final class AutoTideFishHack extends Hack
 	}
 	
 	@Override
-	public void onRender(com.mojang.blaze3d.vertex.PoseStack matrixStack, float partialTicks)
+	public void onRender(com.mojang.blaze3d.vertex.PoseStack matrixStack,
+		float partialTicks)
 	{
 		processMinigame();
 	}
@@ -120,8 +122,10 @@ public final class AutoTideFishHack extends Hack
 			float absPos = Math.abs(position);
 			
 			// Use the actual 'area' field for 100% catch rate.
-			// If Perfect Catch is on, use a slightly tighter threshold within the mod's 0.1f limit.
-			float threshold = perfectCatch.isChecked() ? Math.min(area, 0.09f) : area;
+			// If Perfect Catch is on, use a slightly tighter threshold within
+			// the mod's 0.1f limit.
+			float threshold =
+				perfectCatch.isChecked() ? Math.min(area, 0.09f) : area;
 			
 			if(absPos <= threshold)
 			{
