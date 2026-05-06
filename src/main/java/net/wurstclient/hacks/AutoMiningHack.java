@@ -248,6 +248,10 @@ public final class AutoMiningHack extends Hack
 		addFilter("Other: Cobblestone", "minecraft:cobblestone", masterOther);
 		addFilter("Mega: Blank stone", "mega_showdown:blank_mega_stone",
 			masterOther);
+		addFilter("Other: Ender Pearl", "minecraft:ender_pearl", masterOther);
+		addFilter("Other: Echo Shard", "minecraft:echo_shard", masterOther);
+		addFilter("Other: Enchanted Book", "minecraft:enchanted_book",
+			masterOther);
 		addFilter("Mega: Key stone", "mega_showdown:key_stone", masterOther);
 		addFilter("Mega: Z-Crystal", "mega_showdown:blank_z_crystal",
 			masterOther);

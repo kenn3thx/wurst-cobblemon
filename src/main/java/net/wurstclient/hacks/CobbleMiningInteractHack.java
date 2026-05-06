@@ -54,7 +54,7 @@ public final class CobbleMiningInteractHack extends Hack
 	implements UpdateListener, PreMotionListener, RenderListener
 {
 	private final SliderSetting range = new SliderSetting("Range",
-		"Range to look for mining spots.", 5, 1, 10, 0.1, ValueDisplay.DECIMAL);
+		"Range to look for mining spots.", 5, 1, 20, 0.1, ValueDisplay.DECIMAL);
 	
 	private final EnumSetting<Mode> mode = new EnumSetting<>("Mode",
 		"Interaction mode.", Mode.values(), Mode.SNAP);
