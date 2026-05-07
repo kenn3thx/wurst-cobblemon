@@ -11,11 +11,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.cobblemon.mod.common.CobblemonNetwork;
+import com.cobblemon.mod.common.battles.BattleFormat;
+import com.cobblemon.mod.common.client.CobblemonClient;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
+import com.cobblemon.mod.common.net.messages.server.BattleChallengePacket;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -102,11 +107,20 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 		new SliderSetting("Rotation Speed", 600, 10, 3600, 10,
 			ValueDisplay.DEGREES.withSuffix("/s"));
 	
+	private final CheckboxSetting autoBattle =
+		new CheckboxSetting("Auto Battle",
+			"Automatically interact with target to start battle.", true);
+	
+	private final SliderSetting battleRange =
+		new SliderSetting("Battle Range", "Maximum distance to start battle.",
+			20.0, 1.0, 50.0, 0.5, ValueDisplay.DECIMAL);
+	
 	private final ArrayList<PokemonEntity> pokemonList = new ArrayList<>();
 	private PokemonEntity target;
 	private float nextYaw;
 	private float nextPitch;
 	private boolean wasFollowing;
+	private int interactTimer;
 	
 	public CobblemonHunterHack()
 	{
@@ -128,6 +142,8 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 		addSetting(autoAim);
 		addSetting(autoFollow);
 		addSetting(followDistance);
+		addSetting(autoBattle);
+		addSetting(battleRange);
 	}
 	
 	@Override
@@ -147,6 +163,7 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 		EVENTS.remove(CameraTransformViewBobbingListener.class, this);
 		EVENTS.remove(RenderListener.class, this);
 		target = null;
+		
 		if(wasFollowing)
 		{
 			MC.options.keyUp.setDown(false);
@@ -158,6 +175,9 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 	@Override
 	public void onUpdate()
 	{
+		if(interactTimer > 0)
+			interactTimer--;
+		
 		pokemonList.clear();
 		target = null;
 		
@@ -175,7 +195,8 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 			String name = pokemon.getSpecies().getName().toLowerCase();
 			
 			// 1.1 Wild Only filter (affects both ESP and Targeting)
-			if(filterWildOnly.isChecked() && (!pokemon.isWild() || pokemon.getOwnerUUID() != null))
+			if(filterWildOnly.isChecked()
+				&& (!pokemon.isWild() || pokemon.getOwnerUUID() != null))
 				return false;
 			
 			// 1.2 Rendering / Selection logic
@@ -275,6 +296,206 @@ public final class CobblemonHunterHack extends Hack implements UpdateListener,
 				// Auto Jump
 				if(MC.player.horizontalCollision && MC.player.onGround())
 					MC.player.jumpFromGround();
+			}
+			
+			// Auto Battle - send BattleChallengePacket directly
+			if(autoBattle.isChecked() && MC.screen == null)
+			{
+				boolean hasBattle = target.getBattleId() != null;
+				if(hasBattle)
+				{
+					// Target already in a battle, skip
+				}else
+				{
+					double rangeSq = Math.pow(battleRange.getValue(), 2);
+					double distSq = MC.player.distanceToSqr(target);
+					if(distSq <= rangeSq)
+					{
+						if(interactTimer <= 0)
+						{
+							try
+							{
+								Object storage =
+									CobblemonClient.INSTANCE.getStorage();
+								Class<?> storageClass = Class.forName(
+									"com.cobblemon.mod.common.client.storage.ClientStorageManager");
+								
+								// Find getSelectedSlot
+								java.lang.reflect.Method getSelectedSlotMethod =
+									null;
+								try
+								{
+									getSelectedSlotMethod = storageClass
+										.getMethod("getSelectedSlot");
+								}catch(Exception e)
+								{
+									for(java.lang.reflect.Method m : storageClass
+										.getMethods())
+									{
+										if(m.getName().toLowerCase()
+											.contains("selectedslot"))
+										{
+											getSelectedSlotMethod = m;
+											break;
+										}
+									}
+								}
+								
+								if(getSelectedSlotMethod == null)
+									throw new NoSuchMethodException(
+										"getSelectedSlot");
+								int selectedSlot =
+									(int)getSelectedSlotMethod.invoke(storage);
+								
+								if(selectedSlot == -1)
+								{
+									MC.player.displayClientMessage(
+										net.minecraft.network.chat.Component
+											.literal(
+												"§c[AutoBattle] No Pokemon selected in party! Press UP/DOWN to select one."),
+										false);
+									interactTimer = 40;
+								}else
+								{
+									// Find party method
+									java.lang.reflect.Method getPartyMethod =
+										null;
+									try
+									{
+										getPartyMethod = storageClass
+											.getMethod("getMyParty");
+									}catch(Exception e)
+									{
+										for(java.lang.reflect.Method m : storageClass
+											.getMethods())
+										{
+											if(m.getName().toLowerCase()
+												.contains("party")
+												&& m.getParameterCount() == 0)
+											{
+												getPartyMethod = m;
+												break;
+											}
+										}
+									}
+									
+									if(getPartyMethod == null)
+										throw new NoSuchMethodException(
+											"getMyParty/party");
+									Object party =
+										getPartyMethod.invoke(storage);
+									
+									Class<?> partyClass = Class.forName(
+										"com.cobblemon.mod.common.client.storage.ClientParty");
+									
+									// Find get(int) method
+									java.lang.reflect.Method getMethod = null;
+									for(java.lang.reflect.Method m : partyClass
+										.getMethods())
+									{
+										if(m.getName().equals("get")
+											&& m.getParameterCount() == 1
+											&& m.getParameterTypes()[0] == int.class)
+										{
+											getMethod = m;
+											break;
+										}
+									}
+									
+									if(getMethod == null)
+										throw new NoSuchMethodException(
+											"party.get(int)");
+									Pokemon myPokemon = (Pokemon)getMethod
+										.invoke(party, selectedSlot);
+									
+									if(myPokemon == null)
+									{
+										MC.player.displayClientMessage(
+											net.minecraft.network.chat.Component
+												.literal(
+													"§c[AutoBattle] Selected slot is empty!"),
+											false);
+										interactTimer = 40;
+									}else
+									{
+										UUID pokemonUuid = myPokemon.getUuid();
+										BattleChallengePacket packet =
+											new BattleChallengePacket(
+												target.getId(), pokemonUuid,
+												BattleFormat.Companion
+													.getGEN_9_SINGLES());
+										
+										try
+										{
+											Class<?> networkClass =
+												Class.forName(
+													"com.cobblemon.mod.common.CobblemonNetwork");
+											Object networkInstance =
+												networkClass
+													.getField("INSTANCE")
+													.get(null);
+											java.lang.reflect.Method sendMethod =
+												null;
+											for(java.lang.reflect.Method m : networkClass
+												.getMethods())
+											{
+												if(m.getName()
+													.equals("sendToServer"))
+												{
+													sendMethod = m;
+													break;
+												}
+											}
+											sendMethod.invoke(networkInstance,
+												packet);
+										}catch(Exception e2)
+										{
+											// Fallback to direct call if
+											// reflection fails
+											CobblemonNetwork.INSTANCE
+												.sendToServer(packet);
+										}
+										MC.player.displayClientMessage(
+											net.minecraft.network.chat.Component
+												.literal(
+													"§a[AutoBattle] Sent battle challenge!"),
+											false);
+										interactTimer = 40;
+									}
+								}
+							}catch(Exception e)
+							{
+								try
+								{
+									Object storage =
+										CobblemonClient.INSTANCE.getStorage();
+									Class<?> storageClass = Class.forName(
+										"com.cobblemon.mod.common.client.storage.ClientStorageManager");
+									java.util.List<String> methodNames =
+										new java.util.ArrayList<>();
+									for(java.lang.reflect.Method m : storageClass
+										.getDeclaredMethods())
+										methodNames.add(m.getName());
+									MC.player.displayClientMessage(
+										net.minecraft.network.chat.Component
+											.literal("§eAvailable: " + String
+												.join(", ", methodNames)),
+										false);
+								}catch(Exception ex)
+								{}
+								
+								MC.player
+									.displayClientMessage(
+										net.minecraft.network.chat.Component
+											.literal("§c[AutoBattle] "
+												+ e.getClass().getSimpleName()
+												+ ": " + e.getMessage()),
+										false);
+								interactTimer = 40;
+							}
+						}
+					}
+				}
 			}
 		}else
 		{
